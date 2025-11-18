@@ -19,6 +19,19 @@
         <failOnMissingWebXml>false</failOnMissingWebXml>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>jaspersoft-third-party</id>
+            <name>JasperSoft Third Party</name>
+            <url>https://jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts/</url>
+        </repository>
+        <repository>
+            <id>jr-ce-releases</id>
+            <name>JasperReports CE Releases</name>
+            <url>https://jaspersoft.jfrog.io/jaspersoft/jr-ce-releases/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- JavaEE API -->
         <dependency>
@@ -54,11 +67,13 @@
             <version>3.16</version>
         </dependency>
 
-        <!-- iText -->
+        <!-- iText - using local JAR file -->
         <dependency>
             <groupId>com.lowagie</groupId>
             <artifactId>itext</artifactId>
             <version>2.1.7</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/Pae/lib/itext-2.1.7.jar</systemPath>
         </dependency>
 
         <!-- JasperReports -->
@@ -156,6 +171,15 @@
                 <configuration>
                     <warSourceDirectory>Pae/web</warSourceDirectory>
                     <webXml>Pae/web/WEB-INF/web.xml</webXml>
+                    <webResources>
+                        <resource>
+                            <directory>Pae/lib</directory>
+                            <targetPath>WEB-INF/lib</targetPath>
+                            <includes>
+                                <include>**/*.jar</include>
+                            </includes>
+                        </resource>
+                    </webResources>
                 </configuration>
             </plugin>
 
