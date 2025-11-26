@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nuevo Usuario - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="form-center-wrapper">
+    <div class="card-form">
+        <div class="formulario">
+            <h2><i class='bx bx-user-plus'></i> Nuevo Usuario</h2>
+            
+            <form method="post" class="form-usuario">
+                {% csrf_token %}
+                
+                <!-- Documento -->
+                <div class="fila">
+                    <div class="campo full">
+                        <label for="documento">
+                            <i class='bx bx-id-card'></i>
+                            Documento
+                        </label>
+                        <input type="number" 
+                               id="documento" 
+                               name="documento" 
+                               required 
+                               placeholder="Número de documento"
+                               class="input"
+                               value="{{ request.POST.documento }}">
+                        <span class="help-text">Cédula de ciudadanía, tarjeta de identidad, etc.</span>
+                    </div>
+                </div>
+
+                <!-- Nombres y Apellidos -->
+                <div class="fila dos-columnas">
+                    <div class="campo">
+                        <label for="nombres">
+                            <i class='bx bx-user'></i>
+                            Nombres
+                        </label>
+                        <input type="text" 
+                               id="nombres" 
+                               name="nombres" 
+                               required 
+                               placeholder="Nombres completos"
+                               class="input"
+                               value="{{ request.POST.nombres }}">
+                    </div>
+                    <div class="campo">
+                        <label for="apellidos">
+                            <i class='bx bx-user'></i>
+                            Apellidos
+                        </label>
+                        <input type="text" 
+                               id="apellidos" 
+                               name="apellidos" 
+                               required 
+                               placeholder="Apellidos completos"
+                               class="input"
+                               value="{{ request.POST.apellidos }}">
+                    </div>
+                </div>
+
+                <!-- Teléfono y Dirección -->
+                <div class="fila dos-columnas">
+                    <div class="campo">
+                        <label for="telefono">
+                            <i class='bx bx-phone'></i>
+                            Teléfono
+                        </label>
+                        <input type="tel" 
+                               id="telefono" 
+                               name="telefono" 
+                               required 
+                               placeholder="3001234567"
+                               class="input"
+                               value="{{ request.POST.telefono }}">
+                    </div>
+                    <div class="campo">
+                        <label for="direccion">
+                            <i class='bx bx-home'></i>
+                            Dirección
+                        </label>
+                        <input type="text" 
+                               id="direccion" 
+                               name="direccion" 
+                               required 
+                               placeholder="Dirección completa"
+                               class="input"
+                               value="{{ request.POST.direccion }}">
+                    </div>
+                </div>
+
+                <!-- Correo y Contraseña -->
+                <div class="fila dos-columnas">
+                    <div class="campo">
+                        <label for="correo">
+                            <i class='bx bx-envelope'></i>
+                            Correo Electrónico
+                        </label>
+                        <input type="email" 
+                               id="correo" 
+                               name="correo" 
+                               required 
+                               placeholder="usuario@ejemplo.com"
+                               class="input"
+                               value="{{ request.POST.correo }}">
+                    </div>
+                    <div class="campo">
+                        <label for="password">
+                            <i class='bx bx-lock'></i>
+                            Contraseña
+                        </label>
+                        <div class="password-wrapper">
+                            <input type="password" 
+                                   id="password" 
+                                   name="password" 
+                                   required 
+                                   placeholder="Contraseña segura"
+                                   class="input">
+                            <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                <i class='bx bx-show'></i>
+                            </button>
+                        </div>
+                        <span class="help-text">Mínimo 6 caracteres</span>
+                    </div>
+                </div>
+
+                <!-- Rol -->
+                <div class="fila">
+                    <div class="campo full">
+                        <label for="rol">
+                            <i class='bx bx-shield'></i>
+                            Rol en el Sistema
+                        </label>
+                        <select id="rol" name="rol" required class="select">
+                            <option value="">Seleccione un rol</option>
+                            <option value="A" {% if request.POST.rol == 'A' %}selected{% endif %}>
+                                👤 Administrador
+                            </option>
+                            <option value="EP" {% if request.POST.rol == 'EP' %}selected{% endif %}>
+                                🏭 Empleado de Producción
+                            </option>
+                            <option value="EV" {% if request.POST.rol == 'EV' %}selected{% endif %}>
+                                💼 Empleado de Ventas
+                            </option>
+                        </select>
+                        <span class="help-text">Define los permisos y accesos del usuario</span>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="botones">
+                    <button type="submit" class="btn-primario">
+                        <i class='bx bx-save'></i>
+                        Guardar Usuario
+                    </button>
+                    <a href="{% url 'usuarios:index' %}" class="btn-secundario">
+                        <i class='bx bx-x'></i>
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+</section>
+
+<script>
+// Función para mostrar/ocultar contraseña
+function togglePassword(fieldId) {
+    const passwordField = document.getElementById(fieldId);
+    const toggleBtn = passwordField.nextElementSibling.querySelector('i');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleBtn.className = 'bx bx-hide';
+    } else {
+        passwordField.type = 'password';
+        toggleBtn.className = 'bx bx-show';
+    }
+}
+
+// Validaciones en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.form-usuario');
+    const documento = document.getElementById('documento');
+    const telefono = document.getElementById('telefono');
+    const password = document.getElementById('password');
+    
+    // Validar documento
+    documento.addEventListener('input', function() {
+        const valor = this.value;
+        if (valor.length < 7 || valor.length > 12) {
+            this.setCustomValidity('El documento debe tener entre 7 y 12 dígitos');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    // Validar teléfono
+    telefono.addEventListener('input', function() {
+        const valor = this.value;
+        if (valor.length !== 10) {
+            this.setCustomValidity('El teléfono debe tener 10 dígitos');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    // Validar contraseña
+    password.addEventListener('input', function() {
+        const valor = this.value;
+        if (valor.length < 6) {
+            this.setCustomValidity('La contraseña debe tener al menos 6 caracteres');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+});
+</script>
+{% endblock %}

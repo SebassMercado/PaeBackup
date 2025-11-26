@@ -1,0 +1,1731 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nueva Venta - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+<style>
+/* ===== ESTILOS ÚNICOS PARA NUEVA VENTA ===== */
+
+/* Reset y base */
+* {
+    box-sizing: border-box;
+}
+
+/* Layout principal (eliminar ancho calculado que generaba overflow) */
+.home {
+    padding: 0;
+    margin: 0; /* quitamos margen que sumaba ancho extra junto al calc */
+    min-height: 100vh;
+    width: 100%;
+    position: relative;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    overflow-x: auto; /* permitir scroll horizontal para auto-centrado visual */
+}
+
+/* Contenedor principal */
+.nueva-venta-wrapper {
+    background: white;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+    margin: 0 auto; /* centrar dentro del viewport */
+    width: 100%;
+    max-width: 1400px; /* limitar expansión infinita */
+    min-height: auto; /* permitir centrado vertical real */
+    padding: 0 1rem; /* respiración lateral */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* centra hijos (header + contenido) horizontalmente */
+}
+
+/* Header personalizado para nueva venta */
+.venta-header {
+    background: linear-gradient(135deg, #b71c1c 0%, #dc3545 100%);
+    color: white;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 1200px; /* igual que contenido para alineación visual */
+    border-radius: 16px; /* dar consistencia con cards */
+}
+
+.venta-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transform: translate(50px, -50px);
+}
+
+.venta-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+.venta-header .subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+    font-weight: 300;
+}
+
+/* Contenido del formulario */
+.venta-content {
+    padding: 2.5rem 0; /* padding horizontal reducido, ya existe wrapper padding */
+    background: white;
+    max-width: 1200px; /* limitar ancho del contenido interno */
+    margin: 0 auto; /* centrar */
+    width: 100%; /* asegurar que flex centering tome ancho completo definido */
+}
+
+/* Cards de sección estilo moderno */
+.venta-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid rgba(220, 53, 69, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.venta-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.venta-card.primary {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-color: rgba(220, 53, 69, 0.2);
+}
+
+.venta-card.success {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-color: rgba(34, 197, 94, 0.2);
+}
+
+/* Card específica para agregar empanadas para evitar corte de contenidos flotantes */
+.venta-card.agregar-card {overflow: visible;}
+
+/* Grid mejorada para la fila de agregar empanada (responsiva) */
+.empanada-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    align-items: end;
+    margin-top: 0.5rem;
+}
+.empanada-grid .field-group {min-width: 160px;}
+.empanada-grid .field-group button {width: 100%;}
+@media (max-width: 900px) { .empanada-grid {grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));} }
+@media (max-width: 600px) { .empanada-grid {grid-template-columns: 1fr;} .empanada-grid .field-group button {margin-top: 0.5rem;} }
+
+/* Estado vacío cuando no hay recetas disponibles */
+.empty-recetas {
+    padding: 1.75rem 1.5rem;
+    text-align: center;
+    color: #6b7280;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    border: 2px dashed rgba(220,53,69,0.15);
+    border-radius: 14px;
+    background: linear-gradient(135deg,#fafafa,#f5f5f5);
+    margin-top: 0.75rem;
+}
+.empty-recetas i {font-size: 2.5rem; color:#dc3545; opacity:.65;}
+.empty-recetas h4 {margin:0; font-size:1.15rem; font-weight:600; color:#374151;}
+.empty-recetas p {margin:0; font-size:0.9rem;}
+
+/* Deshabilitar controles cuando no hay recetas */
+.sin-recetas select[disabled] {cursor:not-allowed; opacity:.85; background:#f1f5f9;}
+.sin-recetas .info-display, .sin-recetas input, .sin-recetas button {opacity:.5; pointer-events:none;}
+
+/* Headers de sección modernos */
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(220, 53, 69, 0.1);
+}
+
+.card-header h3 {
+    color: #b71c1c;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.card-header .icon {
+    background: linear-gradient(135deg, #dc3545, #b71c1c);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* Grid responsive moderno */
+.venta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.field-group {
+    position: relative;
+}
+
+.field-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+/* Inputs estilo moderno */
+.venta-input, .venta-select, .venta-textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    background: white;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+}
+
+.venta-input:focus, .venta-select:focus, .venta-textarea:focus {
+    outline: none;
+    border-color: #dc3545;
+    background: #fefefe;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Forzar texto negro en selects deshabilitados (empleado auto-asignado) */
+select:disabled, .venta-select:disabled {
+    color: #000 !important;
+    opacity: 1; /* evitar apariencia atenuada */
+    background-color: #f8f9fa;
+}
+/* Autocomplete estilos */
+.autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 50;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+.autocomplete-item {
+    padding: 0.65rem 0.85rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover {
+    background: linear-gradient(135deg,#fee2e2,#fff5f5);
+}
+.autocomplete-primary { font-weight:600; color:#b71c1c; }
+.autocomplete-secondary { font-size:0.75rem; color:#475569; }
+.autocomplete-empty { padding:0.75rem; text-align:center; font-size:0.8rem; color:#6b7280; }
+
+.venta-input::placeholder {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* Input con iconos */
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 1.1rem;
+}
+
+.input-with-icon .venta-input {
+    padding-left: 2.75rem;
+}
+
+/* Sistema de botones moderno */
+.venta-btn {
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.venta-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.venta-btn:hover::before {
+    left: 100%;
+}
+
+.btn-primary-venta {
+    background: linear-gradient(135deg, #dc3545, #b71c1c);
+    color: white;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+.btn-primary-venta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+}
+
+.btn-secondary-venta {
+    background: white;
+    color: #374151;
+    border: 2px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.btn-secondary-venta:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+}
+
+.btn-success-venta {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.btn-success-venta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+}
+
+/* Tabla moderna estilo dashboard */
+.venta-table-container {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+/* Scroll wrapper para evitar corte horizontal */
+.venta-table-scroll {overflow-x:auto; width:100%;}
+
+.venta-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 680px; /* asegurar espacio para todas las columnas */
+}
+
+.venta-table thead {
+    background: linear-gradient(135deg, #b71c1c, #dc3545);
+    color: white;
+}
+
+.venta-table th {
+    padding: 0.75rem 0.6rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.venta-table td {
+    padding: 0.75rem 0.6rem;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.8rem;
+    vertical-align: middle;
+}
+
+/* Columnas numéricas centradas */
+.venta-table td:nth-child(2),
+.venta-table td:nth-child(3),
+.venta-table td:nth-child(4) {text-align:center;}
+
+/* Columna acciones compacta */
+.venta-table th:last-child, .venta-table td:last-child {text-align:center; width:72px;}
+
+.venta-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.venta-table tbody tr:hover {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    transform: scale(1.01);
+}
+
+.venta-table .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6b7280;
+}
+
+/* Estado vacío expandido (carrito vacío) */
+/* Wrapper para estado vacío que realmente ocupa todo el ancho (colspan) */
+.venta-table tr.empty-state td {padding:0 !important; background:transparent;}
+.cart-empty-wrapper {
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:0.75rem;
+    min-height:220px;
+    padding:3rem 2rem;
+    background: linear-gradient(135deg,#f5f7fa,#eef2f5);
+    border-radius:12px;
+    box-sizing:border-box;
+}
+.cart-empty-wrapper i {font-size:3.4rem; opacity:.6;}
+.cart-empty-wrapper h4 {margin:.35rem 0 .15rem; font-size:1.05rem; font-weight:700; letter-spacing:.6px;}
+.cart-empty-wrapper p {margin:0; font-size:.85rem; max-width:560px; line-height:1.4;}
+.cart-empty-wrapper::after {content:''; width:110px; height:3px; background:linear-gradient(90deg,#dc3545,#b71c1c); border-radius:3px; margin-top:.85rem; opacity:.4;}
+
+.venta-table .empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Sección de total moderna */
+.venta-total-section {
+    background: linear-gradient(135deg, #b71c1c, #dc3545);
+    color: white;
+    padding: 2rem;
+    margin-top: 2rem;
+    border-radius: 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(220, 53, 69, 0.3);
+}
+
+.venta-total-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+}
+
+.venta-total-section h4 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    opacity: 0.9;
+    position: relative;
+    z-index: 2;
+}
+
+.venta-total-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+}
+
+/* Info display estilo moderno */
+.info-display {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    font-weight: 500;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.info-display i {
+    color: #dc3545;
+    font-size: 1.1rem;
+    background: rgba(220, 53, 69, 0.1);
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+/* Container de botones */
+.venta-actions {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 2px solid rgba(220, 53, 69, 0.1);
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Campo requerido */
+.required-field {
+    color: #ef4444;
+    font-weight: 700;
+    margin-left: 0.25rem;
+}
+
+/* Alertas modernas */
+.venta-alert {
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.venta-alert.success {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+}
+
+.venta-alert.error {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #991b1b;
+}
+
+.venta-alert i {
+    font-size: 1.2rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .venta-header {
+        padding: 1.5rem;
+    }
+    
+    .venta-header h1 {
+        font-size: 2rem;
+    }
+    
+    .venta-content {
+        padding: 1.5rem;
+    }
+    
+    .venta-card {
+        padding: 1.5rem;
+    }
+    
+    .venta-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .venta-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+/* Header del módulo */
+.encabezado {
+    background: linear-gradient(135deg, var(--primary-color, #dc3545), #c82333);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 0;
+}
+
+.encabezado h2 {
+    font-size: 1.8rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: white;
+}
+
+.acciones-principales {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-accion-header {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-accion-header:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Secciones del formulario */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #dc3545;
+}
+
+.section-header h3 {
+    color: #dc3545;
+    font-size: 1.4rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+}
+
+/* Contenido del formulario */
+.form-content {
+    padding: 2rem;
+}
+
+.form-section {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    border: 1px solid #e9ecef;
+}
+
+.form-section.highlight {
+    background: linear-gradient(135deg, #e3f2fd, #f5f5f5);
+    border: 2px solid rgba(220, 53, 69, 0.1);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.6rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.required-field {
+    color: #dc3545;
+    margin-left: 0.3rem;
+}
+
+/* Inputs mejorados */
+.form-input, .form-select, .form-textarea {
+    padding: 0.8rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+    width: 100%;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+    background: #fefefe;
+}
+
+.form-select {
+    cursor: pointer;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+/* Display de información */
+.info-display {
+    padding: 1rem 1.2rem;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    color: #495057;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.precio-display {
+    padding: 1rem 1.2rem;
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border-radius: 8px;
+    border: 2px solid #c3e6cb;
+    color: #155724;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+/* Checkbox mejorado */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    margin: 1.5rem 0;
+    transition: all 0.3s ease;
+}
+
+.checkbox-container:hover {
+    border-color: #dc3545;
+    background: #fefefe;
+}
+
+.checkbox-container input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #dc3545;
+}
+
+.checkbox-container label {
+    margin: 0;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Panel nuevo cliente mejorado */
+.panel-nuevo-cliente {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin: 1.5rem 0;
+    border: 2px solid #dc3545;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.1);
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Tabla de detalles mejorada */
+.tabla-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    margin: 2rem 0;
+}
+
+.wrapper {
+    overflow-x: auto;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+}
+
+.tabla-detalles {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+    background: white;
+}
+
+.tabla-detalles thead {
+    background: linear-gradient(135deg, #343a40, #495057);
+    color: white;
+}
+
+.tabla-detalles th {
+    padding: 1rem 1.2rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    border: none;
+}
+
+.tabla-detalles td {
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.tabla-detalles tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.tabla-detalles tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.tabla-detalles tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.tabla-vacia {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+}
+
+.tabla-vacia i {
+    font-size: 3rem;
+    opacity: 0.5;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.tabla-vacia h4 {
+    margin: 0.5rem 0;
+    font-size: 1.2rem;
+    color: #495057;
+}
+
+.tabla-vacia p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Total mejorado */
+.total-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    margin: 2rem 0;
+}
+
+.total-container {
+    text-align: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #e3f2fd, #f5f5f5);
+    border-radius: 12px;
+    border: 2px solid #dc3545;
+}
+
+.total-container h4 {
+    color: #343a40;
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.total-amount {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Botones mejorados */
+.botones-container {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    background: linear-gradient(135deg, #c82333, #dc3545);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    background: linear-gradient(135deg, #495057, #6c757d);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-add {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    background: linear-gradient(135deg, #20c997, #28a745);
+}
+
+.btn-delete {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
+}
+
+.btn-delete:hover {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* ===== Overrides modo oscuro (alineado a estilos de nuevo cliente) ===== */
+body.dark-mode .home {background: transparent;}
+body.dark-mode .nueva-venta-wrapper {background: transparent;}
+body.dark-mode .venta-content {background: transparent;}
+body.dark-mode .card-header {border-bottom: 2px solid var(--border-color);} 
+body.dark-mode .venta-header {background: linear-gradient(135deg,var(--accent),var(--accent-hover)); box-shadow:0 8px 28px -6px rgba(0,0,0,.65);} 
+body.dark-mode .venta-header h1 {color:#fff;}
+body.dark-mode .venta-header .subtitle {color: var(--text-color-dim);} 
+body.dark-mode .venta-card {background: var(--surface-2); border:1px solid var(--border-color); box-shadow:0 6px 20px -6px rgba(0,0,0,.6);} 
+body.dark-mode .venta-card.primary, body.dark-mode .venta-card.success {background: var(--surface-2);}
+body.dark-mode .card-header h3 {color: var(--text-color-strong);} 
+body.dark-mode .card-header .icon {background: linear-gradient(135deg,var(--accent),var(--accent-hover)); box-shadow:none;} 
+body.dark-mode .venta-input, body.dark-mode .venta-select, body.dark-mode .venta-textarea {background: var(--surface-1); border:1px solid var(--border-color); color: var(--text-color);} 
+body.dark-mode .venta-input:focus, body.dark-mode .venta-select:focus, body.dark-mode .venta-textarea:focus {border-color: var(--accent); box-shadow:0 0 0 3px rgba(220,53,69,.25);} 
+body.dark-mode .info-display {background: var(--surface-1); border:1px solid var(--border-color); color: var(--text-color);} 
+body.dark-mode .info-display i {background: var(--surface-3); color: var(--accent);} 
+body.dark-mode .venta-table-container {background: var(--surface-2); border-color: var(--border-color);} 
+body.dark-mode .venta-table thead {background: linear-gradient(135deg,var(--accent),var(--accent-hover));} 
+body.dark-mode .venta-table tbody tr:hover {background: var(--surface-3);} 
+body.dark-mode .venta-total-section {background: linear-gradient(135deg,var(--accent),var(--accent-hover)); box-shadow:0 10px 34px -8px rgba(0,0,0,.7);} 
+body.dark-mode .venta-total-amount {color:#fff;} 
+body.dark-mode .venta-actions {border-top:2px solid var(--border-color);} 
+body.dark-mode .venta-btn.primary {background: linear-gradient(135deg,var(--accent),var(--accent-hover)); color:#fff;} 
+body.dark-mode .venta-btn.secondary {background: var(--surface-3); color: var(--text-color);} 
+body.dark-mode .venta-btn.secondary:hover {background: var(--accent); color:#fff;} 
+body.dark-mode .venta-select:disabled {background: var(--surface-2); color: var(--text-color-dim) !important;} 
+body.dark-mode .panel-nuevo-cliente {background: var(--surface-2); border-color: var(--accent);} 
+body.dark-mode .venta-input::placeholder {color: var(--text-color-dim);} 
+body.dark-mode .checkbox-container {background: var(--surface-2); border-color: var(--border-color);} 
+body.dark-mode .checkbox-container:hover {background: var(--surface-1); border-color: var(--accent);} 
+body.dark-mode .btn-delete {background: rgba(239,68,68,.15); color:#ef4444; border-color: rgba(239,68,68,.35);} 
+body.dark-mode .btn-delete:hover {background:#ef4444; color:#fff;} 
+body.dark-mode .empty-state {color: var(--text-color-dim);} 
+body.dark-mode .empty-state i {opacity:.35;} 
+body.dark-mode .venta-alert.success {background: rgba(34,197,94,.18); color: var(--success);} 
+body.dark-mode .venta-alert.error {background: rgba(239,68,68,.22); color: var(--danger);} 
+body.dark-mode .venta-alert {box-shadow:0 4px 16px -4px rgba(0,0,0,.55);} 
+/* Eliminar zonas blancas restantes en modo oscuro */
+body.dark-mode .venta-table-container {background: var(--surface-2);} 
+body.dark-mode .venta-table td, body.dark-mode .venta-table tbody tr {background: var(--surface-2); border-bottom:1px solid var(--border-color);} 
+body.dark-mode .venta-table tbody tr:hover {background: var(--surface-3);} 
+body.dark-mode .venta-table .empty-state {background: var(--surface-2); box-shadow:none;} 
+body.dark-mode .venta-table .empty-state h4 {color: var(--text-color-strong);} 
+body.dark-mode .venta-table .empty-state p {color: var(--text-color-dim);} 
+body.dark-mode .cart-empty-wrapper {background: var(--surface-2);} 
+body.dark-mode .cart-empty-wrapper i {opacity:.75;} 
+body.dark-mode .cart-empty-wrapper::after {background:linear-gradient(90deg,var(--accent),var(--accent-hover)); opacity:.5;} 
+body.dark-mode .venta-table tr.empty-state td i {opacity:.7;} 
+body.dark-mode .venta-table tr.empty-state td::after {background:linear-gradient(90deg,var(--accent),var(--accent-hover)); opacity:.4;} 
+body.dark-mode .autocomplete-list {background: var(--surface-2); border-color: var(--border-color); box-shadow:0 8px 24px -6px rgba(0,0,0,.65);} 
+body.dark-mode .autocomplete-item {border-bottom:1px solid var(--border-color); color: var(--text-color);} 
+body.dark-mode .autocomplete-item:hover {background: var(--surface-3);} 
+body.dark-mode .autocomplete-primary {color: var(--accent);} 
+body.dark-mode .autocomplete-secondary {color: var(--text-color-dim);} 
+body.dark-mode .panel-nuevo-cliente {background: var(--surface-2);} 
+body.dark-mode .panel-nuevo-cliente input, body.dark-mode .panel-nuevo-cliente textarea {background: var(--surface-1); border:1px solid var(--border-color); color: var(--text-color);} 
+body.dark-mode .checkbox-container {background: var(--surface-2); border-color: var(--border-color);} 
+body.dark-mode .info-display {background: var(--surface-1); border-color: var(--border-color);} 
+body.dark-mode .total-section, body.dark-mode .venta-total-section {background: linear-gradient(135deg,var(--accent),var(--accent-hover));} 
+body.dark-mode .total-container {background: var(--surface-2); border-color: var(--accent);} 
+body.dark-mode .total-amount, body.dark-mode .venta-total-amount {color:#fff;} 
+body.dark-mode .btn-primary, body.dark-mode .btn-add {background: linear-gradient(135deg,var(--accent),var(--accent-hover));} 
+body.dark-mode .btn-secondary {background: var(--surface-3); color: var(--text-color);} 
+body.dark-mode .btn-secondary:hover {background: var(--accent); color:#fff;} 
+body.dark-mode .btn-add:hover {box-shadow:0 6px 18px -6px rgba(0,0,0,.7);} 
+body.dark-mode .venta-input, body.dark-mode .form-input {background: var(--surface-1);}
+body.dark-mode .venta-card.agregar-card {overflow: visible;}
+body.dark-mode .empanada-grid .info-display {background: var(--surface-1); border:1px solid var(--border-color);}
+body.dark-mode .empty-recetas {background: var(--surface-2); border-color: var(--border-color); color: var(--text-color-dim);} 
+body.dark-mode .empty-recetas i {color: var(--accent); opacity:.85;} 
+
+/* Alertas mejoradas */
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+}
+
+.alert-error {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+}
+
+.alert i {
+    font-size: 1.2rem;
+}
+
+/* Mensajes de error */
+.error-message {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+    display: block;
+    font-weight: 500;
+}
+
+/* Elementos de datos de tabla */
+.monto-display {
+    font-weight: 700;
+    color: #28a745;
+    font-size: 1rem;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.nombre-producto {
+    font-weight: 600;
+    color: #343a40;
+}
+
+.cantidad-display {
+    text-align: center;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .encabezado {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .acciones-principales {
+        justify-content: center;
+    }
+    
+    .form-content,
+    .form-section,
+    .tabla-section,
+    .total-section {
+        padding: 1rem;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .botones-container {
+        flex-direction: column;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .tabla-detalles th,
+    .tabla-detalles td {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .wrapper {
+        font-size: 0.85rem;
+    }
+    
+    .total-amount {
+        font-size: 2rem;
+    }
+    
+    .form-grid {
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="form-center-wrapper">
+    <div class="nueva-venta-wrapper">
+        <!-- Header personalizado -->
+        <div class="venta-header">
+            <h1>
+                <i class='bx bx-cart-add'></i>
+                Nueva Venta
+            </h1>
+            <p class="subtitle">Sistema de registro de ventas PAE</p>
+        </div>
+        
+        <!-- Contenido principal -->
+        <div class="venta-content">
+
+            <!-- Mensajes -->
+            {% if messages %}
+                <div style="padding: 1rem 2rem;">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {% if message.tags == "success" %}
+                            <i class='bx bx-check-circle'></i>
+                        {% else %}
+                            <i class='bx bx-error-circle'></i>
+                        {% endif %}
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'ventas:procesar_nueva_venta' %}" id="formVenta" class="form-usuario">
+                {% csrf_token %}
+
+                    <!-- Información del usuario -->
+                    <div class="venta-card primary">
+                        <div class="card-header">
+                            <h3>
+                                <span class="icon"><i class='bx bx-user-circle'></i></span>
+                                Información del Usuario
+                            </h3>
+                        </div>
+                        
+                        <div class="field-group">
+                            <label>Usuario que registra la venta</label>
+                            <div class="info-display">
+                                <i class='bx bx-user'></i>
+                                {% if request.session.usuario_nombres %}
+                                    {{ request.session.usuario_nombres }} {{ request.session.usuario_apellidos }} 
+                                    ({{ request.session.usuario_rol }})
+                                {% else %}
+                                    Usuario del Sistema (Temporal)
+                                {% endif %}
+                            </div>
+                            <input type="hidden" name="id_usuario" value="{{ request.session.usuario_id|default:'' }}">
+                        </div>
+                    </div>
+
+                    <!-- Información del cliente -->
+                    <div class="venta-card agregar-card {% if not recetas %}sin-recetas{% endif %}">
+                        <div class="card-header">
+                            <h3>
+                                <span class="icon"><i class='bx bx-user'></i></span>
+                                Información del Cliente
+                            </h3>
+                        </div>
+                        
+                        <div class="venta-grid">
+                            <div class="field-group" style="position:relative;">
+                                <label for="buscarCliente">Cliente (buscador) <span class="required-field">*</span></label>
+                                <input type="text" id="buscarCliente" class="venta-input" placeholder="Buscar por nombre, NIT, teléfono o correo" autocomplete="off" {% if nuevo_cliente %}disabled{% endif %}>
+                                <input type="hidden" name="id_cliente" id="id_cliente_hidden" value="">
+                                <div id="clienteResultados" class="autocomplete-list" style="display:none;"></div>
+                            </div>
+
+                            <div class="field-group">
+                                <label for="id_asignado">
+                                    Asignado a (Empleado de Producción) 
+                                    <span class="required-field">*</span>
+                                </label>
+                                <select id="id_asignado_display" class="venta-select" disabled>
+                                    <option value="">-- Empleado auto-asignado --</option>
+                                    {% for usuario in usuarios_ep %}
+                                    <option value="{{ usuario.id_usu }}" {% if empleado_auto_id == usuario.id_usu %}selected{% endif %}>
+                                        {{ usuario.nombres }} {{ usuario.apellidos }}{% if usuario.producciones_activas is not None %} ({{ usuario.producciones_activas }} activas){% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <input type="hidden" name="id_asignado" value="{{ empleado_auto_id }}">
+                            </div>
+                        </div>
+
+                        <!-- Checkbox Nuevo Cliente -->
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="chkNuevoCliente" name="nuevo_cliente" 
+                                   value="1" {% if nuevo_cliente %}checked{% endif %}
+                                   onchange="toggleNuevoCliente(this)">
+                            <label for="chkNuevoCliente">
+                                <i class='bx bx-user-plus'></i>
+                                ¿Registrar cliente nuevo?
+                            </label>
+                        </div>
+
+                        <!-- Panel Nuevo Cliente -->
+                        <div id="panelNuevoCliente" class="panel-nuevo-cliente" style="display: {% if nuevo_cliente %}block{% else %}none{% endif %};">
+                            <div class="section-header">
+                                <h3><i class='bx bx-user-plus'></i> Datos del Nuevo Cliente</h3>
+                            </div>
+                            <div class="form-grid">
+                                <div class="field-group">
+                                    <label for="cliente_nombre">
+                                        Nombre completo
+                                        <span class="required-field">*</span>
+                                    </label>
+                                    <input type="text" id="cliente_nombre" name="cliente_nombre" class="venta-input" 
+                                           placeholder="Ingrese el nombre completo" required>
+                                </div>
+                                <div class="field-group">
+                                    <label for="cliente_telefono">Teléfono</label>
+                                    <input type="tel" id="cliente_telefono" name="cliente_telefono" class="venta-input"
+                                           placeholder="Ingrese el teléfono">
+                                </div>
+                                <div class="field-group">
+                                    <label for="cliente_correo">Correo electrónico</label>
+                                    <input type="email" id="cliente_correo" name="cliente_correo" class="venta-input"
+                                           placeholder="Ingrese el correo">
+                                </div>
+                                <div class="field-group">
+                                    <label for="cliente_nit">
+                                        NIT/Documento
+                                        <span class="required-field">*</span>
+                                    </label>
+                                    <input type="text" id="cliente_nit" name="cliente_nit" class="venta-input"
+                                           placeholder="Ingrese el NIT o documento" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="field-group">
+                            <label for="observaciones">Observaciones de la venta</label>
+                            <textarea id="observaciones" name="observaciones" class="venta-textarea" rows="3"
+                                      placeholder="Ingrese observaciones adicionales..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Agregar productos -->
+                    <div class="venta-card detalle-card">
+                        <div class="card-header">
+                            <h3>
+                                <span class="icon"><i class='bx bx-food-menu'></i></span>
+                                Agregar Empanadas
+                            </h3>
+                        </div>
+                        
+                        <div class="field-group" style="margin-bottom: 1.5rem;">
+                            <label for="receta">Selecciona la empanada</label>
+                            <select id="receta" name="receta_temp" class="venta-select" onchange="actualizarPrecio()" {% if not recetas %}disabled{% endif %}>
+                                <option value="">{% if recetas %}-- Selecciona una empanada --{% else %}No hay recetas disponibles{% endif %}</option>
+                                {% for receta in recetas %}
+                                <option value="{{ receta.id_rec }}" data-precio="{{ receta.precio }}">{{ receta.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        {% if recetas %}
+                        <div class="empanada-grid">
+                            <div class="field-group">
+                                <label>Precio unitario</label>
+                                <div class="info-display" id="precioUnitario">$0</div>
+                            </div>
+                            <div class="field-group">
+                                <label for="cantidad">Cantidad</label>
+                                <input type="number" id="cantidad" name="cantidad_temp" class="venta-input" min="1" value="1" onchange="calcularSubtotal()" oninput="calcularSubtotal()" placeholder="Cantidad">
+                            </div>
+                            <div class="field-group">
+                                <label>Subtotal</label>
+                                <div class="info-display" id="subtotalEmpanada">$0</div>
+                            </div>
+                            <div class="field-group">
+                                <button type="button" onclick="agregarDetalle()" class="venta-btn primary">
+                                    <i class='bx bx-plus'></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="empty-recetas">
+                            <i class='bx bx-package'></i>
+                            <h4>Sin recetas registradas</h4>
+                            <p>Primero debes crear recetas para poder agregar empanadas a la venta.</p>
+                            <a href="{% url 'recetas:crear' %}" class="venta-btn secondary" style="margin-top:0.5rem;">
+                                <i class='bx bx-add-to-queue'></i> Crear Receta
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tabla de detalles -->
+                    <div class="venta-card">
+                        <div class="card-header">
+                            <h3>
+                                <span class="icon"><i class='bx bx-list-ul'></i></span>
+                                Detalle de la Venta
+                            </h3>
+                        </div>
+                        
+                                                <div class="venta-table-container">
+                                                    <div class="venta-table-scroll">
+                                                        <table class="venta-table">
+                                <thead>
+                                    <tr>
+                                        <th>Empanada</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio Unit.</th>
+                                        <th>Subtotal</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaDetalles">
+                                    <tr class="empty-state">
+                                        <td colspan="5">
+                                            <div class="cart-empty-wrapper">
+                                                <i class='bx bx-cart-alt'></i>
+                                                <h4>Carrito vacío</h4>
+                                                <p>No hay empanadas agregadas al carrito</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="venta-total-section">
+                        <h4>Total de la venta</h4>
+                        <div class="venta-total-amount" id="totalVenta">$0</div>
+                    </div>
+
+                    <!-- Botones -->
+                    <!-- Campo oculto para los detalles de la venta -->
+                    <input type="hidden" id="detalles_venta" name="detalles_venta" value="">
+
+                    <div class="venta-actions">
+                        <button type="submit" class="venta-btn primary" id="btnRegistrarVenta" onclick="return enviarFormulario();">
+                            <i class='bx bx-save'></i>
+                            Registrar Venta
+                        </button>
+                        <a href="{% url 'ventas:index' %}" class="venta-btn secondary">
+                            <i class='bx bx-arrow-back'></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+    </div>
+</section>
+
+<script>
+let detalles = [];
+let contadorDetalle = 0;
+
+// Referencias cliente autocomplete
+const buscarClienteInput = document.getElementById('buscarCliente');
+const clienteResultadosDiv = document.getElementById('clienteResultados');
+const clienteHidden = document.getElementById('id_cliente_hidden');
+let clienteTimer = null;
+const URL_BUSCAR_CLIENTES = '{% url "ventas:buscar_clientes_ajax" %}';
+
+// Toggle nuevo cliente (habilita/deshabilita buscador)
+function toggleNuevoCliente(checkbox) {
+    const panel = document.getElementById('panelNuevoCliente');
+    if (checkbox.checked) {
+        panel.style.display = 'block';
+        buscarClienteInput.disabled = true;
+        clienteHidden.value = '';
+        limpiarResultadosClientes();
+    } else {
+        panel.style.display = 'none';
+        buscarClienteInput.disabled = false;
+    }
+}
+
+function limpiarResultadosClientes() {
+    if (!clienteResultadosDiv) return;
+    clienteResultadosDiv.style.display = 'none';
+    clienteResultadosDiv.innerHTML = '';
+}
+
+function renderResultadosClientes(lista) {
+    if (!clienteResultadosDiv) return;
+    if (!lista.length) {
+        clienteResultadosDiv.innerHTML = '<div class="autocomplete-empty">Sin coincidencias</div>';
+        clienteResultadosDiv.style.display = 'block';
+        return;
+    }
+    clienteResultadosDiv.innerHTML = lista.map(c => `
+        <div class="autocomplete-item" onclick="seleccionarCliente(${c.id}, '${c.nombre.replace(/'/g, "&#39;")}', '${c.nit}', '${c.telefono}', '${c.correo}')">
+            <span class="autocomplete-primary">${c.nombre}</span>
+            <span class="autocomplete-secondary">NIT: ${c.nit} | Tel: ${c.telefono} | ${c.correo}</span>
+        </div>
+    `).join('');
+    clienteResultadosDiv.style.display = 'block';
+}
+
+function seleccionarCliente(id, nombre) {
+    clienteHidden.value = id;
+    buscarClienteInput.value = nombre;
+    limpiarResultadosClientes();
+}
+
+if (buscarClienteInput) {
+    buscarClienteInput.addEventListener('input', () => {
+        const q = buscarClienteInput.value.trim();
+        clienteHidden.value = '';
+        if (q.length < 2) { limpiarResultadosClientes(); return; }
+        clearTimeout(clienteTimer);
+        clienteTimer = setTimeout(() => {
+            fetch(URL_BUSCAR_CLIENTES + '?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(data => renderResultadosClientes(data.clientes || []))
+                .catch(() => limpiarResultadosClientes());
+        }, 300);
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (clienteResultadosDiv && !clienteResultadosDiv.contains(e.target) && e.target !== buscarClienteInput) {
+        limpiarResultadosClientes();
+    }
+});
+
+function validarClienteSeleccionado() {
+    const nuevoClienteChecked = document.getElementById('chkNuevoCliente')?.checked;
+    if (!nuevoClienteChecked && !clienteHidden.value) {
+        alert('Seleccione un cliente (escriba mínimo 2 caracteres para buscar)');
+        buscarClienteInput.focus();
+        return false;
+    }
+    return true;
+}
+
+// Actualizar precio al seleccionar receta
+function actualizarPrecio() {
+    const select = document.getElementById('receta');
+    const option = select.options[select.selectedIndex];
+    const precio = option.dataset.precio || 0;
+    
+    document.getElementById('precioUnitario').textContent = `$${parseFloat(precio).toLocaleString('es-CO')}`;
+    
+    // Calcular subtotal automáticamente
+    calcularSubtotal();
+}
+
+// Calcular subtotal
+function calcularSubtotal() {
+    const select = document.getElementById('receta');
+    const cantidadInput = document.getElementById('cantidad');
+    
+    if (!select.value) {
+        document.getElementById('subtotalEmpanada').textContent = '$0';
+        return;
+    }
+    
+    const option = select.options[select.selectedIndex];
+    const precio = parseFloat(option.dataset.precio || 0);
+    const cantidad = parseInt(cantidadInput.value || 0);
+    
+    const subtotal = precio * cantidad;
+    document.getElementById('subtotalEmpanada').textContent = `$${subtotal.toLocaleString('es-CO')}`;
+}
+
+// Agregar detalle al carrito
+function agregarDetalle() {
+    const select = document.getElementById('receta');
+    const cantidad = parseInt(document.getElementById('cantidad').value);
+    
+    if (!select.value) {
+        alert('Por favor selecciona una empanada');
+        return;
+    }
+    
+    if (!cantidad || cantidad < 1) {
+        alert('La cantidad debe ser mayor a 0');
+        return;
+    }
+    
+    const option = select.options[select.selectedIndex];
+    const detalle = {
+        id: contadorDetalle++,
+        receta_id: select.value,
+        nombre: option.text.split(' - ')[0],
+        cantidad: cantidad,
+        precio_unitario: parseFloat(option.dataset.precio),
+        subtotal: parseFloat(option.dataset.precio) * cantidad
+    };
+    
+    detalles.push(detalle);
+    renderizarTabla();
+    calcularTotal();
+    
+    // Limpiar formulario
+    select.value = '';
+    document.getElementById('cantidad').value = '1';
+    document.getElementById('precioUnitario').textContent = '$0';
+    document.getElementById('subtotalEmpanada').textContent = '$0';
+}
+
+// Eliminar detalle
+function eliminarDetalle(id) {
+    detalles = detalles.filter(d => d.id !== id);
+    renderizarTabla();
+    calcularTotal();
+}
+
+// Renderizar tabla
+function renderizarTabla() {
+    const tbody = document.getElementById('tablaDetalles');
+    
+    if (detalles.length === 0) {
+        tbody.innerHTML = `
+            <tr class="empty-state">
+                <td colspan="5">
+                    <div class="cart-empty-wrapper">
+                        <i class='bx bx-cart-alt'></i>
+                        <h4>Carrito vacío</h4>
+                        <p>No hay empanadas agregadas al carrito</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = detalles.map(det => `
+        <tr>
+            <td><span class="nombre-producto">${det.nombre}</span></td>
+            <td><span class="cantidad-display">${det.cantidad}</span></td>
+            <td><span class="monto-display">$${det.precio_unitario.toLocaleString('es-CO')}</span></td>
+            <td><span class="monto-display">$${det.subtotal.toLocaleString('es-CO')}</span></td>
+            <td>
+                <button type="button" onclick="eliminarDetalle(${det.id})" class="btn-delete" title="Eliminar producto">
+                    <i class='bx bx-trash'></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Calcular total
+function calcularTotal() {
+    const total = detalles.reduce((sum, det) => sum + det.subtotal, 0);
+    document.getElementById('totalVenta').textContent = `$${total.toLocaleString('es-CO')}`;
+}
+
+// Preparar datos del carrito para envío
+function prepararEnvio() {
+    if (detalles.length === 0) {
+        alert('Debe agregar al menos una empanada a la venta');
+        return false;
+    }
+    
+    const detallesJSON = JSON.stringify(detalles);
+    document.getElementById('detalles_venta').value = detallesJSON;
+    return true;
+}
+
+// Función para enviar formulario
+function enviarFormulario() {
+    if (detalles.length === 0) {
+        alert('Debe agregar al menos una empanada a la venta');
+        return false;
+    }
+    
+    // Preparar los datos del carrito
+    const detallesJSON = JSON.stringify(detalles);
+    document.getElementById('detalles_venta').value = detallesJSON;
+    
+    // Enviar el formulario directamente
+    document.getElementById('formVenta').submit();
+    
+    return false; // Evitar el submit por defecto
+}
+</script>
+<script>
+// Auto-scroll horizontal al extremo derecho para simular centrado
+document.addEventListener('DOMContentLoaded', function() {
+    // Pequeño retardo para asegurar cálculo correcto del ancho total
+    setTimeout(function() {
+        const maxScroll = document.documentElement.scrollWidth - window.innerWidth;
+        if (maxScroll > 0) {
+            window.scrollTo({ left: maxScroll, top: 0 });
+        }
+    }, 60);
+});
+</script>
+
+{% endblock %}

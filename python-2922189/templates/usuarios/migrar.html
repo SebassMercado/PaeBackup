@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Migrar Usuarios - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="card-form">
+        <div class="formulario">
+            <h2><i class='bx bx-upload'></i> Migración de Usuarios</h2>
+            <p class="descripcion">Carga usuarios masivamente desde un archivo Excel</p>
+            
+            <!-- Instrucciones -->
+            <div class="instrucciones">
+                <h3><i class='bx bx-info-circle'></i> Instrucciones</h3>
+                <ol>
+                    <li>El archivo debe ser formato Excel (.xlsx o .xls)</li>
+                    <li>Debe contener las siguientes columnas:
+                        <div class="columnas-requeridas">
+                            <span class="columna">documento</span>
+                            <span class="columna">nombres</span>
+                            <span class="columna">apellidos</span>
+                            <span class="columna">telefono</span>
+                            <span class="columna">direccion</span>
+                            <span class="columna">correo</span>
+                            <span class="columna">rol</span>
+                            <span class="columna">password</span>
+                        </div>
+                    </li>
+                    <li>El rol debe ser: <code>A</code> (Administrador), <code>EP</code> (Empleado Producción), <code>EV</code> (Empleado Ventas)</li>
+                    <li>Los documentos y correos deben ser únicos</li>
+                </ol>
+            </div>
+            
+            <!-- Formulario de Carga -->
+            <form method="post" enctype="multipart/form-data" class="form-upload">
+                {% csrf_token %}
+                
+                <div class="campo-archivo">
+                    <label for="excel_file" class="upload-area">
+                        <div class="upload-icon">
+                            <i class='bx bx-cloud-upload'></i>
+                        </div>
+                        <div class="upload-text">
+                            <h4>Selecciona tu archivo Excel</h4>
+                            <p>Arrastra y suelta o haz clic para seleccionar</p>
+                            <span class="file-types">Formatos: .xlsx, .xls</span>
+                        </div>
+                        <input type="file" 
+                               id="excel_file" 
+                               name="excel_file" 
+                               accept=".xlsx,.xls"
+                               required
+                               style="display: none;">
+                    </label>
+                    <div class="file-info" style="display: none;">
+                        <div class="file-selected">
+                            <i class='bx bx-file'></i>
+                            <span class="file-name"></span>
+                            <button type="button" class="remove-file">
+                                <i class='bx bx-x'></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="botones">
+                    <button type="submit" class="btn-primario upload-btn" disabled>
+                        <i class='bx bx-upload'></i>
+                        <span class="btn-text">Cargar Usuarios</span>
+                        <span class="loading" style="display: none;">
+                            <i class='bx bx-loader-alt bx-spin'></i>
+                            Procesando...
+                        </span>
+                    </button>
+                    <a href="{% url 'usuarios:index' %}" class="btn-secundario">
+                        <i class='bx bx-arrow-back'></i>
+                        Volver al Menú
+                    </a>
+                </div>
+            </form>
+            
+            <!-- Template de Ejemplo -->
+            <div class="ejemplo-template">
+                <h3><i class='bx bx-download'></i> Plantilla de Ejemplo</h3>
+                <p>Descarga una plantilla para facilitar la carga de usuarios</p>
+                <a href="#" class="btn-template" onclick="descargarTemplate()">
+                    <i class='bx bx-file-blank'></i>
+                    Descargar Template
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('excel_file');
+    const uploadArea = document.querySelector('.upload-area');
+    const fileInfo = document.querySelector('.file-info');
+    const fileName = document.querySelector('.file-name');
+    const removeBtn = document.querySelector('.remove-file');
+    const uploadBtn = document.querySelector('.upload-btn');
+    const form = document.querySelector('.form-upload');
+    
+    // Drag & Drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            mostrarArchivo(files[0]);
+        }
+    });
+    
+    // Selección de archivo
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            mostrarArchivo(this.files[0]);
+        }
+    });
+    
+    // Remover archivo
+    removeBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        fileInfo.style.display = 'none';
+        uploadArea.style.display = 'flex';
+        uploadBtn.disabled = true;
+    });
+    
+    // Mostrar archivo seleccionado
+    function mostrarArchivo(file) {
+        if (file.type.includes('sheet') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+            fileName.textContent = file.name;
+            uploadArea.style.display = 'none';
+            fileInfo.style.display = 'block';
+            uploadBtn.disabled = false;
+        } else {
+            alert('Por favor selecciona un archivo Excel válido');
+            fileInput.value = '';
+        }
+    }
+    
+    // Submit del formulario
+    form.addEventListener('submit', function() {
+        uploadBtn.querySelector('.btn-text').style.display = 'none';
+        uploadBtn.querySelector('.loading').style.display = 'inline-flex';
+        uploadBtn.disabled = true;
+    });
+});
+
+// Función para descargar template
+function descargarTemplate() {
+    const data = [
+        ['documento', 'nombres', 'apellidos', 'telefono', 'direccion', 'correo', 'rol', 'password'],
+        [12345678, 'Juan', 'Pérez', 3001234567, 'Calle 123 #45-67', 'juan@ejemplo.com', 'EV', '123456'],
+        [87654321, 'María', 'González', 3009876543, 'Carrera 45 #78-90', 'maria@ejemplo.com', 'EP', '123456']
+    ];
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    data.forEach(row => {
+        csvContent += row.join(",") + "\n";
+    });
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", "template_usuarios.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Seleccionar Cliente - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+<style>
+.client-selector {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.client-item {
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.client-item:hover {
+    background: #f8f9fa;
+    border-color: #b71c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.client-item.selected {
+    background: #ffeaa7;
+    border-color: #b71c1c;
+    box-shadow: 0 4px 12px rgba(183, 28, 28, 0.2);
+}
+
+.client-info h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.client-details {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.client-details span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.search-box {
+    margin-bottom: 20px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.search-box input:focus {
+    border-color: #b71c1c;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1><i class='bx bx-user-check'></i> Seleccionar Cliente</h1>
+                <p>Elija un cliente de la lista</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-box">
+        <input type="text" 
+               id="searchClient" 
+               placeholder="Buscar cliente por nombre, NIT, teléfono o correo..."
+               onkeyup="filtrarClientes()">
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class='bx bxs-group'></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_clientes }}</h3>
+                <p>Total Clientes</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class='bx bx-check-circle'></i>
+            </div>
+            <div class="stat-info">
+                <h3 id="clienteSeleccionadoId">-</h3>
+                <p>Cliente Seleccionado</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Selector -->
+    <div class="form-section">
+        <div class="form-container">
+            <h3><i class='bx bx-list-ul'></i> Lista de Clientes</h3>
+            
+            {% if clientes %}
+            <div class="client-selector" id="clientSelector">
+                {% for cliente in clientes %}
+                <div class="client-item" 
+                     data-id="{{ cliente.id_Cliente }}"
+                     data-nombre="{{ cliente.nombre|lower }}"
+                     data-nit="{{ cliente.nit|lower }}"
+                     data-telefono="{{ cliente.telefono|lower }}"
+                     data-correo="{{ cliente.correo|lower }}"
+                     onclick="seleccionarCliente({{ cliente.id_Cliente }}, '{{ cliente.nombre|escapejs }}', '{{ cliente.nit|escapejs }}', '{{ cliente.telefono|escapejs }}', '{{ cliente.correo|escapejs }}')">
+                    
+                    <div class="client-info">
+                        <h4>{{ cliente.nombre }}</h4>
+                        <div class="client-details">
+                            <span><i class='bx bx-id-card'></i> {{ cliente.nit }}</span>
+                            <span><i class='bx bx-phone'></i> {{ cliente.telefono }}</span>
+                            <span><i class='bx bx-envelope'></i> {{ cliente.correo }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class='bx bxs-user-x'></i>
+                </div>
+                <h3>No hay clientes registrados</h3>
+                <p>Debe registrar clientes antes de poder seleccionarlos</p>
+                <a href="{% url 'clientes:nuevo' %}" class="btn btn-primary">
+                    <i class='bx bx-plus'></i> Registrar Primer Cliente
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    {% if clientes %}
+    <div class="form-actions">
+        <button type="button" id="btnConfirmar" class="btn btn-primary" disabled onclick="confirmarSeleccion()">
+            <i class='bx bx-check'></i> Confirmar Selección
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="cancelarSeleccion()">
+            <i class='bx bx-x'></i> Cancelar
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Back Button -->
+    <div class="back-section">
+        <a href="{% url 'clientes:index' %}" class="btn-back">
+            <i class='bx bx-chevron-left'></i> Volver a Clientes
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let clienteSeleccionado = null;
+
+function seleccionarCliente(id, nombre, nit, telefono, correo) {
+    // Remover selección anterior
+    document.querySelectorAll('.client-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Seleccionar nuevo cliente
+    event.target.closest('.client-item').classList.add('selected');
+    
+    // Guardar datos del cliente seleccionado
+    clienteSeleccionado = {
+        id: id,
+        nombre: nombre,
+        nit: nit,
+        telefono: telefono,
+        correo: correo
+    };
+    
+    // Actualizar UI
+    document.getElementById('clienteSeleccionadoId').textContent = `#${id}`;
+    document.getElementById('btnConfirmar').disabled = false;
+    
+    console.log('Cliente seleccionado:', clienteSeleccionado);
+}
+
+function confirmarSeleccion() {
+    if (!clienteSeleccionado) {
+        alert('Por favor, seleccione un cliente');
+        return;
+    }
+    
+    // Si es una ventana modal o popup
+    if (window.opener && window.opener.recibirClienteSeleccionado) {
+        window.opener.recibirClienteSeleccionado(clienteSeleccionado);
+        window.close();
+        return;
+    }
+    
+    // Si es un iframe
+    if (parent && parent.recibirClienteSeleccionado) {
+        parent.recibirClienteSeleccionado(clienteSeleccionado);
+        return;
+    }
+    
+    // Si es llamada AJAX, devolver datos
+    if (window.callbackSeleccionCliente) {
+        window.callbackSeleccionCliente(clienteSeleccionado);
+        return;
+    }
+    
+    // Fallback: redirigir con parámetros
+    const params = new URLSearchParams({
+        cliente_id: clienteSeleccionado.id,
+        cliente_nombre: clienteSeleccionado.nombre,
+        cliente_nit: clienteSeleccionado.nit,
+        cliente_telefono: clienteSeleccionado.telefono,
+        cliente_correo: clienteSeleccionado.correo
+    });
+    
+    // Redirigir a la página que llamó esta selección
+    const returnUrl = new URLSearchParams(window.location.search).get('return_url') || '{% url "dashboard" %}';
+    window.location.href = `${returnUrl}?${params.toString()}`;
+}
+
+function cancelarSeleccion() {
+    // Si es una ventana modal o popup
+    if (window.opener) {
+        window.close();
+        return;
+    }
+    
+    // Si es un iframe
+    if (parent && parent.cerrarSeleccionCliente) {
+        parent.cerrarSeleccionCliente();
+        return;
+    }
+    
+    // Fallback: volver a clientes
+    window.location.href = '{% url "clientes:index" %}';
+}
+
+function filtrarClientes() {
+    const filtro = document.getElementById('searchClient').value.toLowerCase();
+    const clientes = document.querySelectorAll('.client-item');
+    
+    clientes.forEach(cliente => {
+        const nombre = cliente.dataset.nombre;
+        const nit = cliente.dataset.nit;
+        const telefono = cliente.dataset.telefono;
+        const correo = cliente.dataset.correo;
+        
+        const coincide = nombre.includes(filtro) || 
+                        nit.includes(filtro) || 
+                        telefono.includes(filtro) || 
+                        correo.includes(filtro);
+        
+        cliente.style.display = coincide ? 'block' : 'none';
+    });
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && clienteSeleccionado) {
+        confirmarSeleccion();
+    } else if (e.key === 'Escape') {
+        cancelarSeleccion();
+    }
+});
+
+// Focus search on load
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('searchClient')?.focus();
+});
+</script>
+{% endblock %}

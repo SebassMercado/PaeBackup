@@ -1,0 +1,629 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Clientes - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="contenedor">
+        <div class="tabla">
+            <section class="card">
+                <!-- Header -->
+                <div class="encabezado">
+                    <h2><i class='bx bx-group'></i> Gestión de Clientes</h2>
+                    <div class="acciones-principales">
+                        <a href="{% url 'clientes:nuevo' %}" class="export-btn">
+                            <i class='bx bx-user-plus'></i>
+                            Nuevo Cliente
+                        </a>
+                        <a href="{% url 'clientes:exportar_excel' %}" class="export-btn">
+                            <i class='bx bx-file-export'></i>
+                            Exportar Excel
+                        </a>
+                        <button type="button" class="export-btn" onclick="mostrarModalImportar()">
+                            <i class='bx bx-upload'></i>
+                            Importar Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estadísticas Mejoradas -->
+                <div class="estadisticas-modern">
+                    <div class="stats-container">
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern total">
+                                <i class='bx bx-group'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ total_clientes }}</h3>
+                                <p>Total Clientes</p>
+                                <div class="stat-trend">
+                                    <i class='bx bx-trending-up'></i>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern activos">
+                                <i class='bx bx-user-check'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ clientes_filtrados|default:total_clientes }}</h3>
+                                <p>Clientes Mostrados</p>
+                                <div class="stat-trend positive">
+                                    <i class='bx bx-check-circle'></i>
+                                    <span>Visible</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern inactivos">
+                                <i class='bx bx-filter-alt'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{% if hay_filtros %}Sí{% else %}No{% endif %}</h3>
+                                <p>Filtros Activos</p>
+                                <div class="stat-trend {% if hay_filtros %}positive{% else %}negative{% endif %}">
+                                    <i class='bx {% if hay_filtros %}bx-filter{% else %}bx-x-circle{% endif %}'></i>
+                                    <span>{% if hay_filtros %}Filtrados{% else %}Sin Filtro{% endif %}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Clientes con Filtros -->
+                <div class="table-header">
+                    <h3><i class='bx bx-table'></i> Lista de Clientes</h3>
+                    <button type="button" class="btn-clear-filters" id="clear-filters">
+                        <i class='bx bx-filter-alt'></i>
+                        Limpiar Filtros
+                    </button>
+                </div>
+
+                <div class="wrapper" id="tablaClientesWrapper">
+                    <table id="tablaClientes">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            ID <span class="draggable" data-col="0"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="0">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            NIT <span class="draggable" data-col="1"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="1">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Nombre <span class="draggable" data-col="2"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="2">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Teléfono <span class="draggable" data-col="3"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="3">
+                                    </div>
+                                </th>
+                                <th style="width:305px">
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Correo <span class="draggable" data-col="4"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="4">
+                                    </div>
+                                </th>
+                                <th style="width:120px">
+                                    <div class="column-title">
+                                        Opciones
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cliente in clientes %}
+                            <tr data-client-id="{{ cliente.id_Cliente }}">
+                                <td><span class="cell-content">{{ cliente.id_Cliente }}</span></td>
+                                <td><span class="cell-content">{{ cliente.nit }}</span></td>
+                                <td><span class="cell-content">{{ cliente.nombre }}</span></td>
+                                <td><span class="cell-content">{{ cliente.telefono }}</span></td>
+                                <td><span class="cell-content">{{ cliente.correo }}</span></td>
+                                <td>
+                                    <div class="acciones">
+                                        <!-- Editar -->
+                                        <a href="{% url 'clientes:editar' cliente.id_Cliente %}" 
+                                           class="btn btn-outline-success" 
+                                           title="Editar cliente">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        
+                                        <!-- Eliminar -->
+                                        <button class="btn btn-outline-danger eliminar-cliente" 
+                                                data-client-id="{{ cliente.id_Cliente }}"
+                                                data-client-name="{{ cliente.nombre }}"
+                                                title="Eliminar cliente">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="no-data">
+                                    <div class="empty-state">
+                                        <i class='bx bx-user-x'></i>
+                                        <h3>No hay clientes registrados</h3>
+                                        <p>Comienza creando tu primer cliente</p>
+                                        <a href="{% url 'clientes:nuevo' %}" class="btn btn-primary">
+                                            <i class='bx bx-user-plus'></i>
+                                            Crear Cliente
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if clientes.has_other_pages %}
+                <div class="paginacion">
+                    <div class="pagination-info">
+                        Página {{ clientes.number }} de {{ clientes.paginator.num_pages }}
+                        ({{ clientes.paginator.count }} clientes en total)
+                    </div>
+                    <div class="pagination-controls">
+                        {% if clientes.has_previous %}
+                            <a href="?page=1" class="btn-pag">❮❮</a>
+                            <a href="?page={{ clientes.previous_page_number }}" class="btn-pag">❮</a>
+                        {% endif %}
+                        
+                        <span class="page-current">{{ clientes.number }}</span>
+                        
+                        {% if clientes.has_next %}
+                            <a href="?page={{ clientes.next_page_number }}" class="btn-pag">❯</a>
+                            <a href="?page={{ clientes.paginator.num_pages }}" class="btn-pag">❯❯</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Botón Volver -->
+                <div class="volver-section">
+                    <a href="{% url 'dashboard' %}" class="btn-back">
+                        <i class='bx bx-chevron-left'></i> 
+                        Volver
+                    </a>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+
+<!-- Modal de Confirmación -->
+<div id="modalConfirmacion" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Confirmar Acción</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="mensajeConfirmacion"></p>
+            <input type="text" id="inputConfirmacion" placeholder="Escriba ELIMINAR para confirmar" style="display: none;">
+        </div>
+        <div class="modal-footer">
+            <button id="btnCancelar" class="btn btn-secondary">Cancelar</button>
+            <button id="btnConfirmar" class="btn btn-danger">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Importar Excel -->
+<div id="modalImportar" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class='bx bx-upload'></i> Importar Clientes desde Excel</h3>
+            <button class="modal-close" onclick="cerrarModalImportar()">&times;</button>
+        </div>
+        <form method="POST" action="{% url 'clientes:importar_excel' %}" enctype="multipart/form-data">
+            <div class="modal-body">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="excel">Archivo Excel:</label>
+                    <input type="file" id="excel" name="excel" accept=".xlsx,.xls" required class="form-control">
+                    <small class="form-text">El archivo debe tener las columnas: Nombre, Teléfono, Correo, NIT</small>
+                </div>
+                <div class="info-box">
+                    <i class='bx bx-info-circle'></i>
+                    <div>
+                        <strong>Formato esperado:</strong>
+                        <ul>
+                            <li>Columna A: Nombre del cliente (obligatorio)</li>
+                            <li>Columna B: Teléfono</li>
+                            <li>Columna C: Correo electrónico</li>
+                            <li>Columna D: NIT (obligatorio)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalImportar()">
+                    <i class='bx bx-x'></i> Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class='bx bx-upload'></i> Importar Clientes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// JavaScript para funcionalidades AJAX y modales
+document.addEventListener('DOMContentLoaded', function() {
+    // CSRF Token para AJAX
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Elementos del modal
+    const modal = document.getElementById('modalConfirmacion');
+    const modalClose = document.querySelector('.modal-close');
+    const btnCancelar = document.getElementById('btnCancelar');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    const mensajeConfirmacion = document.getElementById('mensajeConfirmacion');
+    const inputConfirmacion = document.getElementById('inputConfirmacion');
+    
+    let accionPendiente = null;
+    
+    // Funciones del modal
+    function abrirModal(mensaje, requireConfirmation = false) {
+        mensajeConfirmacion.textContent = mensaje;
+        if (requireConfirmation) {
+            inputConfirmacion.style.display = 'block';
+            inputConfirmacion.value = '';
+        } else {
+            inputConfirmacion.style.display = 'none';
+        }
+        modal.style.display = 'flex';
+    }
+    
+    function cerrarModal() {
+        modal.style.display = 'none';
+        accionPendiente = null;
+        inputConfirmacion.value = '';
+    }
+    
+    // Event listeners del modal
+    modalClose.addEventListener('click', cerrarModal);
+    btnCancelar.addEventListener('click', cerrarModal);
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) cerrarModal();
+    });
+    
+    // Eliminar cliente
+    document.querySelectorAll('.eliminar-cliente').forEach(button => {
+        button.addEventListener('click', function() {
+            const clientId = this.getAttribute('data-client-id');
+            const clientName = this.getAttribute('data-client-name');
+            const row = this.closest('tr');
+            
+            accionPendiente = {
+                tipo: 'eliminar',
+                clientId: clientId,
+                clientName: clientName,
+                url: `/clientes/eliminar/${clientId}/`,
+                row: row
+            };
+            
+            abrirModal(`Para confirmar la eliminación del cliente ${clientName}, escriba ELIMINAR:`, true);
+        });
+    });
+    
+    // Confirmar acción
+    btnConfirmar.addEventListener('click', function() {
+        if (!accionPendiente) return;
+        
+        // Validar confirmación para eliminación
+        if (accionPendiente.tipo === 'eliminar') {
+            const confirmacion = inputConfirmacion.value.trim().toUpperCase();
+            if (confirmacion !== 'ELIMINAR') {
+                alert('Debe escribir ELIMINAR para confirmar');
+                return;
+            }
+        }
+        
+        // Ejecutar acción AJAX
+        fetch(accionPendiente.url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensaje de éxito
+                mostrarMensaje(data.mensaje || 'Acción completada exitosamente', 'success');
+                
+                if (accionPendiente.tipo === 'eliminar') {
+                    // Eliminar fila de la tabla
+                    accionPendiente.row.remove();
+                    actualizarEstadisticas(-1);
+                }
+            } else {
+                mostrarMensaje(data.error || 'Error al realizar la acción', 'error');
+            }
+        })
+        .catch(error => {
+            mostrarMensaje('Error de conexión', 'error');
+        })
+        .finally(() => {
+            cerrarModal();
+        });
+    });
+    
+    // Función para mostrar mensajes
+    function mostrarMensaje(mensaje, tipo) {
+        // Crear elemento de mensaje
+        const msgElement = document.createElement('div');
+        msgElement.className = `alert alert-${tipo}`;
+        msgElement.textContent = mensaje;
+        msgElement.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            background: ${tipo === 'success' ? '#28a745' : '#dc3545'};
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        `;
+        
+        document.body.appendChild(msgElement);
+        
+        // Remover después de 3 segundos
+        setTimeout(() => {
+            msgElement.remove();
+        }, 3000);
+    }
+    
+    // Función para actualizar estadísticas
+    function actualizarEstadisticas(total) {
+        const totalElement = document.querySelector('.stat-card-modern:nth-child(1) h3');
+        const mostradosElement = document.querySelector('.stat-card-modern:nth-child(2) h3');
+        
+        if (total !== 0) {
+            const nuevoTotal = parseInt(totalElement.textContent) + total;
+            totalElement.textContent = nuevoTotal;
+            mostradosElement.textContent = nuevoTotal;
+        }
+    }
+    
+    // Sistema de filtros de columnas
+    const filterInputs = document.querySelectorAll('.filter-input');
+    const tableRows = document.querySelectorAll('#tablaClientes tbody tr');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const columnIndex = parseInt(this.getAttribute('data-column'));
+            const filterValue = this.value.toLowerCase().trim();
+            
+            tableRows.forEach(row => {
+                if (row.querySelector('.empty-state')) return; // Skip empty state row
+                
+                const cellValue = row.children[columnIndex].textContent.toLowerCase().trim();
+                const matches = cellValue.includes(filterValue);
+                
+                row.style.display = matches ? '' : 'none';
+            });
+            
+            // Actualizar contador de resultados visibles
+            actualizarContadorResultados();
+        });
+    });
+    
+    // Función para actualizar contador de resultados
+    function actualizarContadorResultados() {
+        const visibleRows = document.querySelectorAll('#tablaClientes tbody tr:not([style*="display: none"])');
+        const emptyStateRow = document.querySelector('#tablaClientes tbody tr .empty-state');
+        const visibleCount = emptyStateRow ? 0 : visibleRows.length;
+        
+        // Actualizar info de paginación si existe
+        const paginationInfo = document.querySelector('.pagination-info');
+        if (paginationInfo && !emptyStateRow) {
+            if (visibleCount === 0) {
+                paginationInfo.textContent = 'No se encontraron resultados';
+            } else {
+                paginationInfo.textContent = `Mostrando ${visibleCount} resultado(s) filtrado(s)`;
+            }
+        }
+    }
+    
+    // Función para limpiar todos los filtros
+    function limpiarFiltros() {
+        filterInputs.forEach(input => {
+            input.value = '';
+        });
+        
+        tableRows.forEach(row => {
+            row.style.display = '';
+        });
+        
+        actualizarContadorResultados();
+    }
+    
+    // Botón limpiar filtros
+    const btnClearFilters = document.getElementById('clear-filters');
+    if (btnClearFilters) {
+        btnClearFilters.addEventListener('click', limpiarFiltros);
+    }
+});
+
+// Funciones globales para modales de importación
+function mostrarModalImportar() {
+    document.getElementById('modalImportar').style.display = 'flex';
+}
+
+function cerrarModalImportar() {
+    document.getElementById('modalImportar').style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    const modalImportar = document.getElementById('modalImportar');
+    if (event.target === modalImportar) {
+        cerrarModalImportar();
+    }
+}
+</script>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div id="modalEliminar" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class='bx bx-trash'></i> Confirmar Eliminación</h3>
+            <button type="button" class="btn-close" onclick="cerrarModal()">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>¿Estás seguro de que deseas eliminar el cliente <strong id="nombreClienteEliminar"></strong>?</p>
+            <p class="warning">⚠️ Esta acción no se puede deshacer.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="cerrarModal()">
+                <i class='bx bx-x'></i> Cancelar
+            </button>
+            <form id="formEliminar" method="POST" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class='bx bx-trash'></i> Eliminar Cliente
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Importar Excel -->
+<div id="modalImportar" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class='bx bx-upload'></i> Importar Clientes desde Excel</h3>
+            <button type="button" class="btn-close" onclick="cerrarModalImportar()">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <form method="POST" action="{% url 'clientes:importar_excel' %}" enctype="multipart/form-data">
+            <div class="modal-body">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="excel">Archivo Excel:</label>
+                    <input type="file" id="excel" name="excel" accept=".xlsx,.xls" required class="form-control">
+                    <small class="form-text">El archivo debe tener las columnas: Nombre, Teléfono, Correo, NIT</small>
+                </div>
+                <div class="info-box">
+                    <i class='bx bx-info-circle'></i>
+                    <div>
+                        <strong>Formato esperado:</strong>
+                        <ul>
+                            <li>Columna A: Nombre del cliente (obligatorio)</li>
+                            <li>Columna B: Teléfono</li>
+                            <li>Columna C: Correo electrónico</li>
+                            <li>Columna D: NIT (obligatorio)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalImportar()">
+                    <i class='bx bx-x'></i> Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class='bx bx-upload'></i> Importar Clientes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle Filters
+function toggleFilters() {
+    const content = document.getElementById('filtersContent');
+    const toggle = document.querySelector('.btn-toggle i');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.classList.remove('bx-chevron-down');
+        toggle.classList.add('bx-chevron-up');
+    } else {
+        content.style.display = 'none';
+        toggle.classList.remove('bx-chevron-up');
+        toggle.classList.add('bx-chevron-down');
+    }
+}
+
+// Modal Functions
+function confirmarEliminacion(clienteId, nombreCliente) {
+    document.getElementById('nombreClienteEliminar').textContent = nombreCliente;
+    document.getElementById('formEliminar').action = `/clientes/eliminar/${clienteId}/`;
+    document.getElementById('modalEliminar').style.display = 'flex';
+}
+
+function cerrarModal() {
+    document.getElementById('modalEliminar').style.display = 'none';
+}
+
+function mostrarModalImportar() {
+    document.getElementById('modalImportar').style.display = 'flex';
+}
+
+function cerrarModalImportar() {
+    document.getElementById('modalImportar').style.display = 'none';
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const modalEliminar = document.getElementById('modalEliminar');
+    const modalImportar = document.getElementById('modalImportar');
+    
+    if (event.target === modalEliminar) {
+        cerrarModal();
+    }
+    if (event.target === modalImportar) {
+        cerrarModalImportar();
+    }
+}
+
+// Auto-expand filters if there are active filters
+document.addEventListener('DOMContentLoaded', function() {
+    {% if hay_filtros %}
+    toggleFilters();
+    {% endif %}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,667 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ventas - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+<style>
+/* Estilos específicos para ventas - complementando usuarios.css */
+
+/* Filtros de columna */
+.column-filter {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.column-filter:focus {
+    outline: none;
+    border-color: var(--primary-color, #dc3545);
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+}
+
+.column-filter::placeholder {
+    color: #aaa;
+    font-style: italic;
+}
+
+.filter-container {
+    margin-top: 0.5rem;
+}
+
+/* Badges específicos para ventas (tipo eliminado) */
+
+/* Estados de venta */
+.estado-badge.completada {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.estado-badge.procesando {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.estado-badge.pagocompleto {
+    background: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+    border: 1px solid rgba(23, 162, 184, 0.2);
+}
+
+.estado-badge.pagopendiente {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+/* Información de usuario/cliente */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--dark-color, #343a40);
+    font-size: 0.9rem;
+}
+
+.user-meta {
+    color: var(--secondary-color, #6c757d);
+    font-size: 0.75rem;
+}
+
+/* Elementos de datos */
+.id-highlight {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+.fecha-display {
+    color: var(--secondary-color, #6c757d);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.precio-display {
+    font-weight: 700;
+    color: #28a745;
+    font-size: 0.95rem;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Acciones de celda */
+.acciones-celda {
+    display: flex;
+    gap: 0.3rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-accion {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    text-decoration: none;
+    background: transparent;
+}
+
+.btn-accion.ver {
+    background: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+    border: 1px solid rgba(23, 162, 184, 0.2);
+}
+
+.btn-accion.ver:hover {
+    background: #17a2b8;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(23, 162, 184, 0.3);
+}
+
+.btn-accion.editar {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.btn-accion.editar:hover {
+    background: #28a745;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.btn-accion.eliminar {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.btn-accion.eliminar:hover {
+    background: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.btn-accion.pagos {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.btn-accion.pagos:hover {
+    background: #ffc107;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+}
+
+/* Paginación unificada estilo Insumos */
+.paginacion {
+    background: #f8f9fa;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #dee2e6;
+}
+.pagination-info {color:#6c757d;font-weight:600;font-size:0.9rem;}
+.pagination-controls {display:flex;gap:0.5rem;align-items:center;}
+.btn-pag {padding:0.5rem 0.75rem;background:#fff;color:#dc3545;text-decoration:none;border:1px solid #dee2e6;border-radius:6px;font-weight:600;transition:all .2s ease;min-width:40px;text-align:center;}
+.btn-pag:hover {background:#dc3545;color:#fff;text-decoration:none;}
+.page-current {padding:0.5rem 0.75rem;background:#dc3545;color:#fff;border-radius:6px;font-weight:700;min-width:40px;text-align:center;}
+
+/* Icono vacío */
+.empty-icon {
+    font-size: 4rem !important;
+    opacity: 0.3;
+    color: #6c757d;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .acciones-principales {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .export-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .pagination-container {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .pagination {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<section class="home">
+    <div class="contenedor">
+        <div class="tabla">
+            <section class="card">
+                <!-- Header -->
+                <div class="encabezado">
+                    <h2><i class='bx bx-cart'></i> Gestión de Ventas</h2>
+                    <div class="acciones-principales">
+                        <a href="{% url 'ventas:nueva' %}" class="export-btn">
+                            <i class='bx bx-cart-add'></i>
+                            Nueva Venta
+                        </a>
+                        <a href="{% url 'ventas:exportar_pdf' %}" class="export-btn">
+                            <i class='bx bx-file-export'></i>
+                            Reporte PDF
+                        </a>
+                        <a href="{% url 'ventas:migrar' %}" class="export-btn">
+                            <i class='bx bx-upload'></i>
+                            Migrar
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Estadísticas Mejoradas -->
+                <div class="estadisticas-modern">
+                    <div class="stats-container">
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern total">
+                                <i class='bx bx-cart'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ estadisticas.total_ventas|default:0 }}</h3>
+                                <p>Total Ventas</p>
+                                <div class="stat-trend">
+                                    <i class='bx bx-trending-up'></i>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tarjeta Procesando -->
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern activos" style="background: rgba(255,193,7,0.15); color:#ffc107;">
+                                <i class='bx bx-time'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ count_procesando|default:0 }}</h3>
+                                <p>Procesando</p>
+                                <div class="stat-trend">
+                                    <i class='bx bx-hourglass'></i>
+                                    <span>Ventas en curso</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta Pago Completo -->
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern activos" style="background: rgba(23,162,184,0.15); color:#17a2b8;">
+                                <i class='bx bx-money'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ count_pago_completo|default:0 }}</h3>
+                                <p>Pago completo</p>
+                                <div class="stat-trend">
+                                    <i class='bx bx-credit-card'></i>
+                                    <span>Pagadas totalmente</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta Completada -->
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern activos" style="background: rgba(40,167,69,0.15); color:#28a745;">
+                                <i class='bx bx-check-circle'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ count_completada|default:0 }}</h3>
+                                <p>Completada</p>
+                                <div class="stat-trend">
+                                    <i class='bx bx-check'></i>
+                                    <span>Finalizadas</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Ventas con Filtros -->
+                <div class="table-header">
+                    <h3><i class='bx bx-table'></i> Lista de Ventas</h3>
+                    <button type="button" class="btn-clear-filters" id="clear-filters">
+                        <i class='bx bx-filter-alt'></i>
+                        Limpiar Filtros
+                    </button>
+                </div>
+
+                <div class="wrapper" id="tablaVentasWrapper">
+                    <table id="tablaVentas">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            ID <span class="draggable" data-col="0"></span>
+                                        </div>
+                                        <div class="filter-container">
+                                            <input type="text" class="column-filter" data-column="0" placeholder="Buscar ID...">
+                                        </div>
+                                    </div>
+                                </th>
+
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Cliente <span class="draggable" data-col="2"></span>
+                                        </div>
+                                        <div class="filter-container">
+                                            <input type="text" class="column-filter" data-column="2" placeholder="Buscar cliente...">
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Fecha <span class="draggable" data-col="3"></span>
+                                        </div>
+                                        <div class="filter-container">
+                                            <input type="date" class="column-filter" data-column="3">
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Total <span class="draggable" data-col="4"></span>
+                                        </div>
+                                        <div class="filter-container">
+                                            <input type="number" class="column-filter" data-column="4" placeholder="Monto...">
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Estado <span class="draggable" data-col="5"></span>
+                                        </div>
+                                        <div class="filter-container">
+                                            <select class="column-filter" data-column="5">
+                                                <option value="">Todos</option>
+                                                <option value="Pago pendiente">Pago Pendiente</option>
+                                                <option value="Procesando">Procesando</option>
+                                                <option value="Pago completo">Pago Completo</option>
+                                                <option value="Completada">Completada</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th class="no-sort">
+                                    <div class="column-header">
+                                        <div class="column-title">Acciones</div>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venta in ventas %}
+                            <tr>
+                                <td>
+                                    <span class="id-highlight"># {{ venta.id_ven }}</span>
+                                </td>
+
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-details">
+                                            <span class="user-name">{{ venta.cliente.nombre }}</span>
+                                            <small class="user-meta">{{ venta.cliente.telefono|default:"Sin teléfono" }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fecha-display">{{ venta.fecha|date:"d/m/Y H:i" }}</span>
+                                </td>
+                                <td>
+                                    <span class="precio-display">${{ venta.total|floatformat:0 }}</span>
+                                </td>
+                                <td>
+                                    <span class="estado-badge {{ venta.estado|lower|cut:' ' }}">
+                                        <i class='bx {% if venta.estado == 'Completada' %}bx-check-circle{% elif venta.estado == 'Procesando' %}bx-time{% elif venta.estado == 'Pago completo' %}bx-money{% else %}bx-error-circle{% endif %}'></i>
+                                        {{ venta.estado }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="acciones-celda">
+                                        <a href="{% url 'ventas:detalle' venta.id_ven %}" class="btn-accion ver" title="Ver detalles">
+                                            <i class='bx bx-show'></i>
+                                        </a>
+                                        <a href="{% url 'ventas:pagos' venta.id_ven %}" class="btn-accion pagos" title="Gestionar pagos">
+                                            <i class='bx bx-money'></i>
+                                        </a>
+                                        <a href="{% url 'ventas:editar' venta.id_ven %}" class="btn-accion editar" title="Editar venta">
+                                            <i class='bx bx-edit'></i>
+                                        </a>
+                                        <button type="button" class="btn-accion eliminar eliminar-venta" 
+                                                data-venta-id="{{ venta.id_ven }}"
+                                                data-cliente-name="{{ venta.cliente.nombre }}"
+                                                title="Eliminar venta">
+                                            <i class='bx bx-trash'></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="no-data">
+                                    <div class="empty-state">
+                                        <i class='bx bx-cart empty-icon'></i>
+                                        <h3>No hay ventas registradas</h3>
+                                        <p>Comienza registrando tu primera venta</p>
+                                        <a href="{% url 'ventas:nueva' %}" class="btn-primary">
+                                            <i class='bx bx-plus'></i>
+                                            Nueva Venta
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación (unificada con Insumos) -->
+                {% if ventas.has_other_pages %}
+                <div class="paginacion">
+                    <div class="pagination-info">
+                        Página {{ ventas.number }} de {{ ventas.paginator.num_pages }} ({{ ventas.paginator.count }} ventas en total)
+                    </div>
+                    <div class="pagination-controls">
+                        {% if ventas.has_previous %}
+                            <a href="?page=1" class="btn-pag" title="Primera página">❮❮</a>
+                            <a href="?page={{ ventas.previous_page_number }}" class="btn-pag" title="Página anterior">❮</a>
+                        {% endif %}
+                        <span class="page-current">{{ ventas.number }}</span>
+                        {% if ventas.has_next %}
+                            <a href="?page={{ ventas.next_page_number }}" class="btn-pag" title="Página siguiente">❯</a>
+                            <a href="?page={{ ventas.paginator.num_pages }}" class="btn-pag" title="Última página">❯❯</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+</section>
+
+<!-- Modal de Confirmación -->
+<div id="modalConfirmacion" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Confirmar Acción</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="mensajeConfirmacion"></p>
+            <input type="text" id="inputConfirmacion" placeholder="Escriba ELIMINAR para confirmar" style="display: none;">
+        </div>
+        <div class="modal-footer">
+            <button id="btnCancelar" class="btn btn-secondary">Cancelar</button>
+            <button id="btnConfirmar" class="btn btn-danger">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript para funcionalidades AJAX y modales
+document.addEventListener('DOMContentLoaded', function() {
+    // CSRF Token para AJAX
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Elementos del modal
+    const modal = document.getElementById('modalConfirmacion');
+    const modalOverlay = modal;
+    const btnCancelar = document.getElementById('btnCancelar');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    const modalClose = document.querySelector('.modal-close');
+    const mensajeConfirmacion = document.getElementById('mensajeConfirmacion');
+    const inputConfirmacion = document.getElementById('inputConfirmacion');
+
+    let accionPendiente = null;
+
+    // Eliminar venta
+    document.querySelectorAll('.eliminar-venta').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const ventaId = this.getAttribute('data-venta-id');
+            const clienteName = this.getAttribute('data-cliente-name');
+            
+            accionPendiente = {
+                tipo: 'eliminar',
+                ventaId: ventaId,
+                clienteName: clienteName,
+                url: `/ventas/eliminar/${ventaId}/`,
+                elemento: this.closest('tr')
+            };
+            
+            abrirModal(`Para confirmar la eliminación de la venta del cliente ${clienteName}, escriba ELIMINAR:`, true);
+        });
+    });
+
+    // Función para abrir modal
+    function abrirModal(mensaje, requiereConfirmacion = false) {
+        mensajeConfirmacion.textContent = mensaje;
+        inputConfirmacion.style.display = requiereConfirmacion ? 'block' : 'none';
+        inputConfirmacion.value = '';
+        modal.style.display = 'flex';
+        if (requiereConfirmacion) {
+            inputConfirmacion.focus();
+        }
+    }
+
+    // Confirmar acción
+    btnConfirmar.addEventListener('click', function() {
+        if (accionPendiente.tipo === 'eliminar') {
+            const confirmacion = inputConfirmacion.value.trim();
+            if (confirmacion !== 'ELIMINAR') {
+                alert('Debe escribir ELIMINAR para confirmar');
+                return;
+            }
+        }
+
+        // Ejecutar la acción
+        fetch(accionPendiente.url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (accionPendiente.tipo === 'eliminar') {
+                    // Eliminar fila de la tabla
+                    accionPendiente.elemento.remove();
+                    // Mostrar mensaje de éxito
+                    alert('Venta eliminada correctamente');
+                }
+            } else {
+                alert(data.error || 'Error al procesar la acción');
+            }
+            cerrarModal();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error de conexión');
+            cerrarModal();
+        });
+    });
+
+    // Cancelar
+    btnCancelar.addEventListener('click', cerrarModal);
+    modalClose.addEventListener('click', cerrarModal);
+
+    // Cerrar modal al hacer clic fuera
+    modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) {
+            cerrarModal();
+        }
+    });
+
+    // Función para cerrar modal
+    function cerrarModal() {
+        modal.style.display = 'none';
+        accionPendiente = null;
+        inputConfirmacion.value = '';
+    }
+
+    // Cerrar modal con ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+            cerrarModal();
+        }
+    });
+});
+
+// Filtros de tabla y funcionalidad de usuarios/insumos
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtros de columna
+    const filters = document.querySelectorAll('.column-filter');
+    const table = document.getElementById('tablaVentas');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    filters.forEach((filter, index) => {
+        filter.addEventListener('input', function() {
+            filterTable();
+        });
+    });
+
+    function filterTable() {
+        rows.forEach(row => {
+            let show = true;
+            
+            filters.forEach((filter, index) => {
+                const cell = row.cells[index];
+                if (cell && filter.value) {
+                    const cellText = cell.textContent.toLowerCase();
+                    const filterValue = filter.value.toLowerCase();
+                    
+                    if (!cellText.includes(filterValue)) {
+                        show = false;
+                    }
+                }
+            });
+            
+            row.style.display = show ? '' : 'none';
+        });
+    }
+
+    // Limpiar filtros
+    document.getElementById('clear-filters').addEventListener('click', function() {
+        filters.forEach(filter => {
+            filter.value = '';
+        });
+        rows.forEach(row => {
+            row.style.display = '';
+        });
+    });
+});
+</script>
+{% endblock %}

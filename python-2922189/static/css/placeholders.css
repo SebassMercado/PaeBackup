@@ -1,0 +1,66 @@
+/* Estilo para placeholder de imágenes */
+.image-placeholder {
+    background: linear-gradient(45deg, #b71c1c, #f44336);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+}
+
+.perfil-placeholder {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #b71c1c, #c62828);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.logo-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #b71c1c, #c62828);
+    color: white;
+    font-weight: bold;
+    font-size: 24px;
+    border-radius: 8px;
+    padding: 8px 16px;
+    text-decoration: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+.logo-placeholder:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    color: white;
+    text-decoration: none;
+}
+
+/* Fallback para imagen de perfil */
+.profile-image-fallback {
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(135deg, #b71c1c, #c62828);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+    margin: 0 auto;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}

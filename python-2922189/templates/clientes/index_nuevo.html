@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Clientes - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="contenedor">
+        <div class="tabla">
+            <section class="card">
+                <!-- Header -->
+                <div class="encabezado">
+                    <h2><i class='bx bx-group'></i> Gestión de Clientes</h2>
+                    <div class="acciones-principales">
+                        <a href="{% url 'clientes:nuevo' %}" class="export-btn">
+                            <i class='bx bx-user-plus'></i>
+                            Nuevo Cliente
+                        </a>
+                        <button onclick="mostrarModalImportar()" class="export-btn">
+                            <i class='bx bx-upload'></i>
+                            Importar Excel
+                        </button>
+                        <a href="{% url 'clientes:exportar_excel' %}" class="export-btn">
+                            <i class='bx bx-download'></i>
+                            Exportar Excel
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="estadisticas-modern">
+                    <div class="stat-card primary">
+                        <div class="stat-icon">
+                            <i class='bx bx-group'></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3>{{ total_clientes }}</h3>
+                                <p>Total Clientes</p>
+                            </div>
+                            <div class="stat-trend positive">
+                                <i class='bx bx-trending-up'></i>
+                                <span>Activos</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card success">
+                        <div class="stat-icon">
+                            <i class='bx bx-search-alt'></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3>{{ clientes|length }}</h3>
+                                <p>Resultados Mostrados</p>
+                            </div>
+                            <div class="stat-trend positive">
+                                <i class='bx bx-check-circle'></i>
+                                <span>Encontrados</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card warning">
+                        <div class="stat-icon">
+                            <i class='bx bx-filter'></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-info">
+                                <h3>{% if hay_filtros %}Sí{% else %}No{% endif %}</h3>
+                                <p>Filtros Activos</p>
+                            </div>
+                            <div class="stat-trend {% if hay_filtros %}positive{% else %}negative{% endif %}">
+                                <i class='bx {% if hay_filtros %}bx-filter{% else %}bx-x-circle{% endif %}'></i>
+                                <span>{% if hay_filtros %}Filtrados{% else %}Sin Filtro{% endif %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="filters-container">
+                    <button class="btn-toggle" onclick="toggleFilters()">
+                        <i class='bx bx-chevron-down'></i>
+                        <span>Filtros de Búsqueda</span>
+                    </button>
+                    <div id="filtersContent" class="filters-content" style="display: none;">
+                        <form method="GET" class="filtros-form">
+                            <div class="filtros-grid">
+                                <div class="filtro-grupo">
+                                    <label>Nombre:</label>
+                                    <input type="text" name="nombre" value="{{ nombre_filtro|default:'' }}" placeholder="Buscar por nombre...">
+                                </div>
+                                <div class="filtro-grupo">
+                                    <label>NIT:</label>
+                                    <input type="text" name="nit" value="{{ nit_filtro|default:'' }}" placeholder="Buscar por NIT...">
+                                </div>
+                                <div class="filtro-grupo">
+                                    <label>Teléfono:</label>
+                                    <input type="text" name="telefono" value="{{ telefono_filtro|default:'' }}" placeholder="Buscar por teléfono...">
+                                </div>
+                                <div class="filtro-grupo">
+                                    <label>Correo:</label>
+                                    <input type="email" name="correo" value="{{ correo_filtro|default:'' }}" placeholder="Buscar por correo...">
+                                </div>
+                            </div>
+                            <div class="filtros-acciones">
+                                <button type="submit" class="btn-aplicar">
+                                    <i class='bx bx-search'></i> Aplicar Filtros
+                                </button>
+                                <a href="{% url 'clientes:index' %}" class="btn-limpiar">
+                                    <i class='bx bx-x'></i> Limpiar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Tabla con filtros por columna -->
+                <div class="tabla-contenedor">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="header-content">Nombre</div>
+                                    <input type="text" class="column-filter" placeholder="Filtrar nombre..." data-column="0">
+                                </th>
+                                <th>
+                                    <div class="header-content">NIT</div>
+                                    <input type="text" class="column-filter" placeholder="Filtrar NIT..." data-column="1">
+                                </th>
+                                <th>
+                                    <div class="header-content">Teléfono</div>
+                                    <input type="text" class="column-filter" placeholder="Filtrar teléfono..." data-column="2">
+                                </th>
+                                <th>
+                                    <div class="header-content">Correo</div>
+                                    <input type="text" class="column-filter" placeholder="Filtrar correo..." data-column="3">
+                                </th>
+                                <th>
+                                    <div class="header-content">Acciones</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaClientes">
+                            {% for cliente in clientes %}
+                            <tr>
+                                <td>{{ cliente.nombre }}</td>
+                                <td>{{ cliente.nit }}</td>
+                                <td>{{ cliente.telefono }}</td>
+                                <td>{{ cliente.correo }}</td>
+                                <td class="acciones">
+                                    <a href="{% url 'clientes:editar' cliente.id %}" class="btn-accion editar" title="Editar">
+                                        <i class='bx bx-edit'></i>
+                                    </a>
+                                    <button onclick="confirmarEliminacion('{{ cliente.id }}', '{{ cliente.nombre }}')" 
+                                            class="btn-accion eliminar" title="Eliminar">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="no-data">
+                                    <div class="empty-state">
+                                        <i class='bx bx-group'></i>
+                                        <h3>No hay clientes registrados</h3>
+                                        <p>Comienza agregando tu primer cliente</p>
+                                        <a href="{% url 'clientes:nuevo' %}" class="btn-primary">
+                                            <i class='bx bx-plus'></i> Agregar Cliente
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if clientes.has_other_pages %}
+                <div class="paginacion">
+                    <div class="paginacion-info">
+                        Mostrando {{ clientes.start_index }} - {{ clientes.end_index }} de {{ clientes.paginator.count }} resultados
+                    </div>
+                    <div class="paginacion-controles">
+                        {% if clientes.has_previous %}
+                        <a href="?page={{ clientes.previous_page_number }}" class="btn-pagina">Anterior</a>
+                        {% endif %}
+                        
+                        {% if clientes.has_next %}
+                        <a href="?page={{ clientes.next_page_number }}" class="btn-pagina">Siguiente</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+</section>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div id="modalEliminar" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class='bx bx-trash'></i> Confirmar Eliminación</h3>
+            <button type="button" class="btn-close" onclick="cerrarModal()">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>¿Estás seguro de que deseas eliminar el cliente <strong id="nombreClienteEliminar"></strong>?</p>
+            <p class="warning">⚠️ Esta acción no se puede deshacer.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="cerrarModal()">
+                <i class='bx bx-x'></i> Cancelar
+            </button>
+            <form id="formEliminar" method="POST" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class='bx bx-trash'></i> Eliminar Cliente
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Importar -->
+<div id="modalImportar" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class='bx bx-upload'></i> Importar Clientes desde Excel</h3>
+            <button class="modal-close" onclick="cerrarModalImportar()">&times;</button>
+        </div>
+        <form method="POST" action="{% url 'clientes:importar_excel' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="excel">Archivo Excel:</label>
+                    <input type="file" id="excel" name="excel" accept=".xlsx,.xls" required class="form-control">
+                    <small class="form-text">El archivo debe tener las columnas: Nombre, Teléfono, Correo, NIT</small>
+                </div>
+                <div class="info-box">
+                    <i class='bx bx-info-circle'></i>
+                    <p>Asegúrate de que el archivo Excel tenga el formato correcto antes de importar.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalImportar()">
+                    <i class='bx bx-x'></i> Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class='bx bx-upload'></i> Importar Clientes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle Filters
+function toggleFilters() {
+    const content = document.getElementById('filtersContent');
+    const toggle = document.querySelector('.btn-toggle i');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.classList.remove('bx-chevron-down');
+        toggle.classList.add('bx-chevron-up');
+    } else {
+        content.style.display = 'none';
+        toggle.classList.remove('bx-chevron-up');
+        toggle.classList.add('bx-chevron-down');
+    }
+}
+
+// Column Filters
+document.addEventListener('DOMContentLoaded', function() {
+    const columnFilters = document.querySelectorAll('.column-filter');
+    
+    columnFilters.forEach(filter => {
+        filter.addEventListener('input', function() {
+            const columnIndex = this.getAttribute('data-column');
+            const filterValue = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('#tablaClientes tr');
+            
+            tableRows.forEach(row => {
+                const cell = row.cells[columnIndex];
+                if (cell) {
+                    const cellText = cell.textContent.toLowerCase();
+                    if (cellText.includes(filterValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        });
+    });
+});
+
+// Modal Functions
+function confirmarEliminacion(clienteId, nombreCliente) {
+    document.getElementById('nombreClienteEliminar').textContent = nombreCliente;
+    document.getElementById('formEliminar').action = '/clientes/eliminar/' + clienteId + '/';
+    document.getElementById('modalEliminar').style.display = 'flex';
+}
+
+function cerrarModal() {
+    document.getElementById('modalEliminar').style.display = 'none';
+}
+
+function mostrarModalImportar() {
+    document.getElementById('modalImportar').style.display = 'flex';
+}
+
+function cerrarModalImportar() {
+    document.getElementById('modalImportar').style.display = 'none';
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const modalEliminar = document.getElementById('modalEliminar');
+    const modalImportar = document.getElementById('modalImportar');
+    
+    if (event.target === modalEliminar) {
+        cerrarModal();
+    }
+    if (event.target === modalImportar) {
+        cerrarModalImportar();
+    }
+}
+
+// Auto-expand filters if there are active filters
+document.addEventListener('DOMContentLoaded', function() {
+    {% if hay_filtros %}
+    toggleFilters();
+    {% endif %}
+});
+</script>
+{% endblock %}

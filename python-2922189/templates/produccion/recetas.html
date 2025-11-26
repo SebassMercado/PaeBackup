@@ -1,0 +1,1354 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Producción - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+<style>
+.production-header {
+    background: linear-gradient(135deg, #dc3545, #b71c1c);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+.production-header h2 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.production-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.info-item {
+    background: rgba(255,255,255,0.1);
+    padding: 10px 15px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.info-item strong {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.recipes-section {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.section-header h3 {
+    color: #dc3545;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.add-recipe-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.add-recipe-btn:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.recipes-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.recipes-table th,
+.recipes-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.recipes-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.recipes-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.ingredient-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    border-left: 4px solid #17a2b8;
+}
+
+.ingredient-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.ingredient-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.ingredients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.ingredient-item {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ingredient-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-disponible {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-agotado {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-insuficiente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-view {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-edit {
+    background: #ffc107;
+    color: #212529;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.estado-receta {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.estado-activa {
+    background: #d4edda;
+    color: #155724;
+}
+
+.estado-inactiva {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #dee2e6;
+}
+
+/* Dark mode */
+body.dark .production-header {
+    background: linear-gradient(135deg, #b71c1c, #8d1515);
+}
+
+body.dark .recipes-section {
+    background: #1f1f1f;
+    color: #e0e0e0;
+}
+
+body.dark .recipes-table th {
+    background: #2a2a2a;
+    color: #ffffff;
+}
+
+body.dark .recipes-table tbody tr:hover {
+    background: #2a2a2a;
+}
+
+body.dark .ingredient-card {
+    background: #2a2a2a;
+    border-left-color: #64b5f6;
+}
+
+body.dark .ingredient-item {
+    background: #1f1f1f;
+    border-color: #444;
+}
+
+/* Modal para agregar recetas */
+.modal-recipe {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-recipe-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 600px;
+    position: relative;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+body.dark .modal-recipe-content {
+    background-color: #1f1f1f;
+    color: #e0e0e0;
+}
+
+.close-modal-recipe {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close-modal-recipe:hover {
+    color: #000;
+}
+
+body.dark .close-modal-recipe {
+    color: #ccc;
+}
+
+body.dark .close-modal-recipe:hover {
+    color: #fff;
+}
+
+/* Estilos para modal de ingredientes */
+.close-modal-ingredientes {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close-modal-ingredientes:hover {
+    color: #000;
+}
+
+body.dark .close-modal-ingredientes {
+    color: #ccc;
+}
+
+body.dark .close-modal-ingredientes:hover {
+    color: #fff;
+}
+
+.receta-estado-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    border-left: 4px solid #17a2b8;
+}
+
+body.dark .receta-estado-info {
+    background: #2a2a2a;
+    color: #e0e0e0;
+}
+
+.estado-general {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+.estadisticas-ingredientes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.stat-ingrediente {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+body.dark .stat-ingrediente {
+    background: #2a2a2a;
+    color: #e0e0e0;
+}
+
+.stat-ingrediente .numero {
+    font-size: 1.8em;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stat-ingrediente .label {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+body.dark .stat-ingrediente .label {
+    color: #adb5bd;
+}
+
+.lista-ingredientes {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.ingrediente-detalle {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+body.dark .ingrediente-detalle {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+.ingrediente-info h4 {
+    margin: 0 0 5px 0;
+    color: #495057;
+}
+
+body.dark .ingrediente-info h4 {
+    color: #e0e0e0;
+}
+
+.ingrediente-info p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+body.dark .ingrediente-info p {
+    color: #adb5bd;
+}
+
+.ingrediente-estado {
+    text-align: center;
+    min-width: 120px;
+}
+
+.badge-estado {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.badge-disponible {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-insuficiente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-agotado {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.stock-info {
+    font-size: 0.8em;
+    margin-top: 5px;
+    color: #6c757d;
+}
+
+body.dark .stock-info {
+    color: #adb5bd;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Estilos para trazabilidad */
+.trazabilidad-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.trazabilidad-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-left: 4px solid #28a745;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
+
+.trazabilidad-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.trazabilidad-card.creacion {
+    border-left-color: #17a2b8;
+}
+
+.trazabilidad-card.aceptacion {
+    border-left-color: #28a745;
+}
+
+.trazabilidad-card.finalizacion {
+    border-left-color: #dc3545;
+}
+
+.trazabilidad-card.duracion {
+    border-left-color: #ffc107;
+}
+
+.trazabilidad-card.pendiente {
+    opacity: 0.6;
+    border-left-color: #6c757d;
+}
+
+.trazabilidad-icon {
+    font-size: 2rem;
+    color: #495057;
+    min-width: 40px;
+}
+
+.trazabilidad-card.creacion .trazabilidad-icon {
+    color: #17a2b8;
+}
+
+.trazabilidad-card.aceptacion .trazabilidad-icon {
+    color: #28a745;
+}
+
+.trazabilidad-card.finalizacion .trazabilidad-icon {
+    color: #dc3545;
+}
+
+.trazabilidad-card.duracion .trazabilidad-icon {
+    color: #ffc107;
+}
+
+.trazabilidad-card.pendiente .trazabilidad-icon {
+    color: #6c757d;
+}
+
+.trazabilidad-content h4 {
+    margin: 0 0 8px 0;
+    color: #495057;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.fecha-valor {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 0 0 5px 0;
+}
+
+.estado-valor {
+    margin: 0 0 5px 0;
+}
+
+.trazabilidad-content small {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Dark mode para trazabilidad */
+body.dark .trazabilidad-card {
+    background: #2a2a2a;
+    color: #e0e0e0;
+}
+
+body.dark .trazabilidad-content h4 {
+    color: #e0e0e0;
+}
+
+body.dark .fecha-valor {
+    color: #ffffff;
+}
+
+body.dark .trazabilidad-content small {
+    color: #adb5bd;
+}
+
+/* Estilos para badges de estado en trazabilidad */
+.estado-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.estado-pendiente {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.estado-aceptada {
+    background: #d4edda;
+    color: #155724;
+}
+
+.estado-finalizada {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.estado-esperandoinsumos, .estado-esperando {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Estados adicionales para cubrir variaciones */
+.estado-badge {
+    text-transform: capitalize;
+}
+
+/* Fallback para estados no definidos */
+.estado-badge:not([class*="estado-pendiente"]):not([class*="estado-aceptada"]):not([class*="estado-finalizada"]):not([class*="estado-esperando"]) {
+    background: #e2e3e5;
+    color: #495057;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <!-- Header de Producción -->
+    <div class="production-header">
+        <h2><i class='bx bx-cog'></i> Producción #{{ produccion.id_proc }}</h2>
+        <div class="production-info">
+            <div class="info-item">
+                <strong>Estado:</strong>
+                {{ produccion.estado }}
+            </div>
+            <div class="info-item">
+                <strong>Fecha:</strong>
+                {{ produccion.fecha_hora|date:"d/m/Y H:i" }}
+            </div>
+            <div class="info-item">
+                <strong>Creado por:</strong>
+                {{ produccion.nombre_completo_creador }}
+            </div>
+            <div class="info-item">
+                <strong>Asignado a:</strong>
+                {{ produccion.nombre_completo_asignado|default:"Sin asignar" }}
+            </div>
+            {% if produccion.venta_origen %}
+            <div class="info-item">
+                <strong>Generada desde:</strong>
+                <a href="/ventas/{{ produccion.venta_origen }}/detalle/" style="color: white; text-decoration: underline;">
+                    Venta #{{ produccion.venta_origen }}
+                </a>
+            </div>
+            {% endif %}
+            <div class="info-item" style="grid-column:1/-1; background: rgba(0,0,0,0.25);">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                    <strong style="margin:0;">Observación Final</strong>
+                    <button type="button" id="toggleObs" style="background:#fff; color:#dc3545; border:1px solid #dc3545; padding:4px 10px; border-radius:6px; font-size:0.7rem; cursor:pointer; font-weight:600;">Ver</button>
+                </div>
+                <div id="obsContent" style="white-space:pre-wrap; max-height:0; overflow:hidden; font-size:0.85rem; margin-top:4px; transition:max-height .3s ease, padding .3s ease; padding:0;">
+                    {% if produccion.observacion %}
+                        {{ produccion.observacion }}
+                    {% else %}
+                        <em>Sin observación registrada al finalizar</em>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Trazabilidad -->
+    <div class="recipes-section">
+        <div class="section-header">
+            <h3><i class='bx bx-time'></i> Trazabilidad de Producción</h3>
+        </div>
+        
+        <div class="trazabilidad-grid">
+            <div class="trazabilidad-card creacion">
+                <div class="trazabilidad-icon">
+                    <i class='bx bx-plus-circle'></i>
+                </div>
+                <div class="trazabilidad-content">
+                    <h4>Fecha de Creación</h4>
+                    <p class="fecha-valor">{{ produccion.fecha_hora|date:"d/m/Y H:i:s" }}</p>
+                    <small>Producción registrada en el sistema</small>
+                </div>
+            </div>
+            
+            <div class="trazabilidad-card aceptacion {% if not produccion.fecha_aceptacion %}pendiente{% endif %}">
+                <div class="trazabilidad-icon">
+                    <i class='bx bx-check-circle'></i>
+                </div>
+                <div class="trazabilidad-content">
+                    <h4>Fecha de Aceptación</h4>
+                    <p class="fecha-valor">
+                        {% if produccion.fecha_aceptacion %}
+                            {{ produccion.fecha_aceptacion|date:"d/m/Y H:i:s" }}
+                        {% else %}
+                            Pendiente
+                        {% endif %}
+                    </p>
+                    <small>Producción aceptada para procesamiento</small>
+                </div>
+            </div>
+            
+            <div class="trazabilidad-card finalizacion {% if not produccion.fecha_finalizacion %}pendiente{% endif %}">
+                <div class="trazabilidad-icon">
+                    <i class='bx bx-flag'></i>
+                </div>
+                <div class="trazabilidad-content">
+                    <h4>Fecha de Finalización</h4>
+                    <p class="fecha-valor">
+                        {% if produccion.fecha_finalizacion %}
+                            {{ produccion.fecha_finalizacion|date:"d/m/Y H:i:s" }}
+                        {% else %}
+                            Pendiente
+                        {% endif %}
+                    </p>
+                    <small>Producción completada y lista</small>
+                </div>
+            </div>
+            
+            <div class="trazabilidad-card duracion">
+                <div class="trazabilidad-icon">
+                    <i class='bx bx-stopwatch'></i>
+                </div>
+                <div class="trazabilidad-content">
+                    <h4>Estado Actual</h4>
+                    <p class="estado-valor">
+                        <span class="estado-badge estado-{{ produccion.estado|lower|cut:' ' }}">
+                            {{ produccion.estado }}
+                        </span>
+                    </p>
+                    <small>Estado actual de la producción</small>
+                </div>
+            </div>
+            {% if produccion.estado == 'Esperando insumos' %}
+            <button type="button" class="btn btn-primary" id="btnReintentar" style="margin-top:8px; padding:8px 16px; font-size:0.8rem;">
+                <i class='bx bx-refresh'></i> Reintentar Finalización
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sección de Recetas Asociadas -->
+    <div class="recipes-section">
+        <div class="section-header">
+            <h3><i class='bx bx-basket'></i> Recetas Asociadas</h3>
+            <button class="add-recipe-btn" onclick="abrirModalReceta()">
+                <i class='bx bx-plus'></i>
+                Agregar Receta
+            </button>
+        </div>
+
+        {% if recetas_produccion %}
+        <table class="recipes-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Receta</th>
+                    <th>Cantidad</th>
+                    <th>Estado Receta</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for receta_prod in recetas_produccion %}
+                <tr>
+                    <td>{{ receta_prod.id_detalle }}</td>
+                    <td>{{ receta_prod.receta.nombre }}</td>
+                    <td>
+                        <span class="editable-cantidad" 
+                              data-id="{{ receta_prod.id_detalle }}"
+                              data-cantidad="{{ receta_prod.cantidad }}">
+                            {{ receta_prod.cantidad }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="estado-receta" id="estado-receta-{{ receta_prod.receta.id_rec }}">
+                            <i class='bx bx-loader bx-spin'></i> Verificando...
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-view ver-ingredientes" 
+                                    data-receta-id="{{ receta_prod.receta.id_rec }}"
+                                    data-receta-nombre="{{ receta_prod.receta.nombre }}"
+                                    title="Ver ingredientes y estado">
+                                <i class='bx bx-show'></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <tr>
+                <td colspan="5" class="empty-state">
+                    <i class='bx bx-basket'></i>
+                    <h3>No hay recetas asociadas</h3>
+                    <p>Agregue recetas a esta producción para comenzar</p>
+                </td>
+            </tr>
+        {% endif %}
+    </div>
+
+    <!-- Sección de Ingredientes de la Receta Seleccionada -->
+    {% if receta_seleccionada %}
+    <div class="recipes-section">
+        <div class="section-header">
+            <h3><i class='bx bx-package'></i> Ingredientes de: {{ receta_seleccionada.nombre }}</h3>
+        </div>
+
+        {% if ingredientes_receta %}
+        <div class="ingredients-grid">
+            {% for ingrediente in ingredientes_receta %}
+            <div class="ingredient-item">
+                <div>
+                    <strong>{{ ingrediente.insumo.nombre }}</strong><br>
+                    <small>{{ ingrediente.cantidad }} {{ ingrediente.unidad }}</small>
+                </div>
+                <span class="ingredient-status 
+                    {% if ingrediente.estado == 'Disponible' %}status-disponible
+                    {% elif ingrediente.estado == 'Agotado' %}status-agotado
+                    {% else %}status-insuficiente{% endif %}">
+                    {{ ingrediente.estado }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class='bx bx-package'></i>
+            <h3>Sin ingredientes registrados</h3>
+            <p>Esta receta no tiene ingredientes asociados</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Botón Volver -->
+    <div class="volver-section">
+        <a href="{% url 'produccion:index' %}" class="btn-back">
+            <i class='bx bx-chevron-left'></i> 
+            Volver a Lista de Producciones
+        </a>
+    </div>
+</section>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', ()=>{
+        const toggleBtn = document.getElementById('toggleObs');
+        const content = document.getElementById('obsContent');
+        if (!toggleBtn || !content) return;
+        let abierto = false;
+        toggleBtn.addEventListener('click', ()=>{
+            abierto = !abierto;
+            if (abierto){
+                content.style.maxHeight = '160px';
+                content.style.padding = '6px 2px 6px 0';
+                toggleBtn.textContent = 'Ocultar';
+            } else {
+                content.style.maxHeight = '0';
+                content.style.padding = '0';
+                toggleBtn.textContent = 'Ver';
+            }
+        });
+    });
+    </script>
+
+<!-- Modal para Agregar Receta -->
+<div id="modalReceta" class="modal-recipe">
+    <div class="modal-recipe-content">
+        <span class="close-modal-recipe">&times;</span>
+        <h3><i class='bx bx-plus'></i> Agregar Receta a Producción</h3>
+        
+        <form id="formAgregarReceta">
+            {% csrf_token %}
+            <div class="fila">
+                <div class="campo full">
+                    <label for="receta_id">
+                        <i class='bx bx-basket'></i>
+                        Seleccionar Receta
+                    </label>
+                    <select id="receta_id" name="receta_id" required class="select">
+                        <option value="">Seleccione una receta</option>
+                        {% for receta in recetas_disponibles %}
+                        <option value="{{ receta.id_rec }}">{{ receta.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="fila">
+                <div class="campo full">
+                    <label for="cantidad">
+                        <i class='bx bx-hash'></i>
+                        Cantidad
+                    </label>
+                    <input type="number" 
+                           id="cantidad" 
+                           name="cantidad" 
+                           required 
+                           min="1" 
+                           value="1"
+                           class="input">
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" onclick="cerrarModalReceta()" class="btn btn-secondary">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class='bx bx-save'></i>
+                    Agregar Receta
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Ver Ingredientes -->
+<div id="modalIngredientes" class="modal-recipe">
+    <div class="modal-recipe-content">
+        <span class="close-modal-ingredientes">&times;</span>
+        <h3 id="tituloModalIngredientes">
+            <i class='bx bx-package'></i> 
+            Ingredientes de la Receta
+        </h3>
+        
+        <div id="estadoRecetaInfo" class="receta-estado-info">
+            <!-- Estado general de la receta -->
+        </div>
+        
+        <div id="estadisticasIngredientes" class="estadisticas-ingredientes">
+            <!-- Estadísticas de ingredientes -->
+        </div>
+        
+        <div id="listaIngredientes" class="lista-ingredientes">
+            <!-- Lista de ingredientes con estados -->
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" onclick="cerrarModalIngredientes()" class="btn btn-secondary">
+                <i class='bx bx-x'></i>
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const produccionId = {{ produccion.id_proc }};
+    const reintentarBtn = document.getElementById('btnReintentar');
+    const badgeEstado = document.getElementById('badge-estado-produccion');
+    
+    // Modal de recetas
+    const modalReceta = document.getElementById('modalReceta');
+    const closeModalReceta = document.querySelector('.close-modal-recipe');
+    
+    // Modal de ingredientes
+    const modalIngredientes = document.getElementById('modalIngredientes');
+    const closeModalIngredientes = document.querySelector('.close-modal-ingredientes');
+    
+    // Abrir modal de receta
+    window.abrirModalReceta = function() {
+        modalReceta.style.display = 'block';
+    };
+    
+    // Cerrar modal de receta
+    window.cerrarModalReceta = function() {
+        modalReceta.style.display = 'none';
+        document.getElementById('formAgregarReceta').reset();
+    };
+    
+    closeModalReceta.addEventListener('click', cerrarModalReceta);
+    window.addEventListener('click', function(event) {
+        if (event.target === modalReceta) {
+            cerrarModalReceta();
+        }
+    });
+    
+    // Funciones para modal de ingredientes
+    window.cerrarModalIngredientes = function() {
+        modalIngredientes.style.display = 'none';
+    };
+    
+    closeModalIngredientes.addEventListener('click', cerrarModalIngredientes);
+    window.addEventListener('click', function(event) {
+        if (event.target === modalIngredientes) {
+            cerrarModalIngredientes();
+        }
+    });
+    
+    // Verificar estado de todas las recetas al cargar la página
+    verificarEstadosRecetas();
+    
+    // Ver ingredientes de receta
+    document.querySelectorAll('.ver-ingredientes').forEach(button => {
+        button.addEventListener('click', function() {
+            const recetaId = this.getAttribute('data-receta-id');
+            const recetaNombre = this.getAttribute('data-receta-nombre');
+            
+            mostrarIngredientesReceta(recetaId, recetaNombre);
+        });
+    });
+    
+    // Agregar receta
+    document.getElementById('formAgregarReceta').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch(`/produccion/api/agregar-receta/${produccionId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarMensaje(data.message, 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                mostrarMensaje(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarMensaje('Error de conexión', 'error');
+        });
+    });
+    
+    // Editar cantidad
+    document.querySelectorAll('.editar-cantidad').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const cantidadActual = this.getAttribute('data-cantidad');
+            
+            const nuevaCantidad = prompt('Nueva cantidad:', cantidadActual);
+            if (nuevaCantidad && nuevaCantidad !== cantidadActual && nuevaCantidad > 0) {
+                
+                fetch(`/produccion/api/actualizar-cantidad-receta/${id}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({ cantidad: nuevaCantidad })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarMensaje(data.message, 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        mostrarMensaje(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarMensaje('Error de conexión', 'error');
+                });
+            }
+        });
+    });
+    
+    // Eliminar receta
+    document.querySelectorAll('.eliminar-receta').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            
+            if (confirm('¿Está seguro de eliminar esta receta de la producción?')) {
+                fetch(`/produccion/api/eliminar-receta/${id}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarMensaje(data.message, 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        mostrarMensaje(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarMensaje('Error de conexión', 'error');
+                });
+            }
+        });
+    });
+    
+    // Función para mostrar mensajes
+    function mostrarMensaje(mensaje, tipo) {
+        console.log(`[${tipo}] ${mensaje}`);
+    }
+
+    // Reintentar finalización (solo si botón existe)
+    if (reintentarBtn) {
+        reintentarBtn.addEventListener('click', function() {
+            reintentarBtn.disabled = true;
+            reintentarBtn.innerHTML = "<i class='bx bx-loader bx-spin'></i> Verificando...";
+            fetch(`/produccion/api/cambiar-estado/${produccionId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({accion: 'finalizar'})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.estado === 'Finalizada') {
+                    mostrarMensaje('Producción finalizada correctamente', 'success');
+                    badgeEstado.textContent = 'Finalizada';
+                    badgeEstado.className = 'estado-badge estado-finalizada';
+                    reintentarBtn.remove();
+                } else {
+                    // Sigue esperando insumos
+                    mostrarMensaje(data.message || 'Aún faltan insumos', 'error');
+                    badgeEstado.textContent = 'Esperando insumos';
+                    badgeEstado.className = 'estado-badge estado-esperandoinsumos';
+                    reintentarBtn.disabled = false;
+                    reintentarBtn.innerHTML = "<i class='bx bx-refresh'></i> Reintentar Finalización";
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                mostrarMensaje('Error al reintentar', 'error');
+                reintentarBtn.disabled = false;
+                reintentarBtn.innerHTML = "<i class='bx bx-refresh'></i> Reintentar Finalización";
+            });
+        });
+    }
+    
+    // Función para verificar estados de todas las recetas
+    function verificarEstadosRecetas() {
+        document.querySelectorAll('.ver-ingredientes').forEach(button => {
+            const recetaId = button.getAttribute('data-receta-id');
+            const estadoElement = document.getElementById(`estado-receta-${recetaId}`);
+            
+            if (estadoElement) {
+                fetch(`/produccion/api/ingredientes-receta/${recetaId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const estado = data.receta.estado;
+                            estadoElement.innerHTML = `
+                                <span class="estado-receta ${estado === 'Activa' ? 'estado-activa' : 'estado-inactiva'}">
+                                    <i class='bx ${estado === 'Activa' ? 'bx-check-circle' : 'bx-x-circle'}'></i>
+                                    ${estado}
+                                </span>
+                            `;
+                        } else {
+                            estadoElement.innerHTML = `
+                                <span class="estado-receta" style="color: #ffc107;">
+                                    <i class='bx bx-error'></i>
+                                    Error
+                                </span>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al verificar estado:', error);
+                        estadoElement.innerHTML = `
+                            <span class="estado-receta" style="color: #dc3545;">
+                                <i class='bx bx-error'></i>
+                                Error
+                            </span>
+                        `;
+                    });
+            }
+        });
+    }
+    
+    // Función para mostrar ingredientes de una receta
+    function mostrarIngredientesReceta(recetaId, recetaNombre) {
+        // Mostrar loading
+        document.getElementById('tituloModalIngredientes').innerHTML = `
+            <i class='bx bx-package'></i> 
+            Ingredientes de: ${recetaNombre}
+        `;
+        
+        document.getElementById('estadoRecetaInfo').innerHTML = `
+            <div class="estado-general">
+                <i class='bx bx-loader bx-spin'></i>
+                Cargando información...
+            </div>
+        `;
+        
+        document.getElementById('estadisticasIngredientes').innerHTML = '';
+        document.getElementById('listaIngredientes').innerHTML = '';
+        
+        modalIngredientes.style.display = 'block';
+        
+        // Obtener datos de ingredientes
+        fetch(`/produccion/api/ingredientes-receta/${recetaId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar información general
+                    const estado = data.receta.estado;
+                    document.getElementById('estadoRecetaInfo').innerHTML = `
+                        <div class="estado-general">
+                            <i class='bx ${estado === 'Activa' ? 'bx-check-circle' : 'bx-x-circle'}'></i>
+                            Estado de la receta: 
+                            <span class="${estado === 'Activa' ? 'estado-activa' : 'estado-inactiva'}">
+                                ${estado}
+                            </span>
+                        </div>
+                        ${estado === 'Inactiva' ? '<p style="color: #721c24; margin-top: 10px;"><i class="bx bx-error"></i> La receta está inactiva porque tiene ingredientes agotados o insuficientes.</p>' : ''}
+                    `;
+                    
+                    // Estadísticas
+                    document.getElementById('estadisticasIngredientes').innerHTML = `
+                        <div class="stat-ingrediente">
+                            <div class="numero" style="color: #17a2b8;">${data.total_ingredientes}</div>
+                            <div class="label">Total Ingredientes</div>
+                        </div>
+                        <div class="stat-ingrediente">
+                            <div class="numero" style="color: #28a745;">${data.ingredientes_disponibles}</div>
+                            <div class="label">Disponibles</div>
+                        </div>
+                        <div class="stat-ingrediente">
+                            <div class="numero" style="color: #dc3545;">${data.ingredientes_agotados}</div>
+                            <div class="label">Agotados/Insuficientes</div>
+                        </div>
+                    `;
+                    
+                    // Lista de ingredientes
+                    let ingredientesHTML = '';
+                    data.ingredientes.forEach(ingrediente => {
+                        let badgeClass = 'badge-disponible';
+                        let iconClass = 'bx-check-circle';
+                        
+                        if (ingrediente.estado === 'Agotado') {
+                            badgeClass = 'badge-agotado';
+                            iconClass = 'bx-x-circle';
+                        } else if (ingrediente.estado === 'Insuficiente') {
+                            badgeClass = 'badge-insuficiente';
+                            iconClass = 'bx-error';
+                        }
+                        
+                        ingredientesHTML += `
+                            <div class="ingrediente-detalle">
+                                <div class="ingrediente-info">
+                                    <h4>${ingrediente.insumo.nombre}</h4>
+                                    <p>Cantidad necesaria: <strong>${ingrediente.cantidad} ${ingrediente.unidad_receta || ingrediente.insumo.unidad_medida}</strong></p>
+                                    <div class="stock-info">
+                                        Stock actual: ${ingrediente.insumo.stock_actual} ${ingrediente.insumo.unidad_medida}
+                                        ${ingrediente.insumo.stock_min ? ` | Mínimo: ${ingrediente.insumo.stock_min}` : ''}
+                                        ${ingrediente.estado_en_receta === 'Agotado' ? ' | <span style="color: #dc3545;">Marcado como agotado en receta</span>' : ''}
+                                        
+                                    </div>
+                                </div>
+                                <div class="ingrediente-estado">
+                                    <div class="badge-estado ${badgeClass}">
+                                        <i class='bx ${iconClass}'></i>
+                                        ${ingrediente.estado}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    document.getElementById('listaIngredientes').innerHTML = ingredientesHTML;
+                    
+                } else {
+                    document.getElementById('estadoRecetaInfo').innerHTML = `
+                        <div class="estado-general" style="color: #dc3545;">
+                            <i class='bx bx-error'></i>
+                            Error al cargar ingredientes: ${data.error}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('estadoRecetaInfo').innerHTML = `
+                    <div class="estado-general" style="color: #dc3545;">
+                        <i class='bx bx-error'></i>
+                        Error de conexión al cargar ingredientes
+                    </div>
+                `;
+            });
+    }
+});
+</script>
+{% endblock %}

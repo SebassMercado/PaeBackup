@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nuevo Cliente - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+{% endblock %}
+
+{% block content %}
+<section class="home" style="display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 100px);">
+    <div class="card-form">
+        <h2 style="text-align: center; margin-bottom: 30px;">Registrar Nuevo Cliente</h2>
+
+        <form method="POST" class="formulario">
+            {% csrf_token %}
+            
+            <!-- Nombre -->
+            <div class="fila">
+                <div class="campo full">
+                    <label for="nombre">Nombre:</label>
+                    <input type="text" 
+                           id="nombre" 
+                           name="nombre" 
+                           value="{{ nombre|default:'' }}"
+                           placeholder="Ingrese el nombre completo del cliente"
+                           required
+                           class="input">
+                </div>
+            </div>
+
+            <!-- NIT y Teléfono -->
+            <div class="fila dos-columnas">
+                <div class="campo">
+                    <label for="nit">NIT:</label>
+                    <input type="text" 
+                           id="nit" 
+                           name="nit" 
+                           value="{{ nit|default:'' }}"
+                           placeholder="Ej: 800.000.000-9"
+                           required
+                           class="input">
+                </div>
+                
+                <div class="campo">
+                    <label for="telefono">Teléfono:</label>
+                    <input type="tel" 
+                           id="telefono" 
+                           name="telefono" 
+                           value="{{ telefono|default:'' }}"
+                           placeholder="Ej: +57 300 123 4567"
+                           required
+                           class="input">
+                </div>
+            </div>
+
+            <!-- Correo -->
+            <div class="fila">
+                <div class="campo full">
+                    <label for="correo">Correo:</label>
+                    <input type="email" 
+                           id="correo" 
+                           name="correo" 
+                           value="{{ correo|default:'' }}"
+                           placeholder="cliente@ejemplo.com"
+                           required
+                           class="input">
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="botones">
+                <button type="submit" class="btn-primario">
+                    <i class='bx bx-save'></i> Guardar Cliente
+                </button>
+                <a href="{% url 'clientes:index' %}" class="btn-secundario">
+                    <i class='bx bx-x'></i> Cancelar
+                </a>
+            </div>
+
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format NIT input
+    const nitInput = document.getElementById('nit');
+    nitInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 0) {
+            if (value.length <= 3) {
+                e.target.value = value;
+            } else if (value.length <= 6) {
+                e.target.value = value.slice(0, 3) + '.' + value.slice(3);
+            } else if (value.length <= 9) {
+                e.target.value = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6);
+            } else {
+                e.target.value = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6, 9) + '-' + value.slice(9, 10);
+            }
+        }
+    });
+
+    // Format phone input
+    const phoneInput = document.getElementById('telefono');
+    phoneInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 0) {
+            if (value.length <= 3) {
+                e.target.value = value;
+            } else if (value.length <= 6) {
+                e.target.value = value.slice(0, 3) + ' ' + value.slice(3);
+            } else {
+                e.target.value = value.slice(0, 3) + ' ' + value.slice(3, 6) + ' ' + value.slice(6, 10);
+            }
+        }
+    });
+
+    // Form validation
+    const form = document.querySelector('.user-form');
+    form.addEventListener('submit', function(e) {
+        const nombre = document.getElementById('nombre').value.trim();
+        const nit = document.getElementById('nit').value.trim();
+        const telefono = document.getElementById('telefono').value.trim();
+        const correo = document.getElementById('correo').value.trim();
+
+        if (!nombre || !nit || !telefono || !correo) {
+            e.preventDefault();
+            alert('Por favor, complete todos los campos obligatorios.');
+            return false;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(correo)) {
+            e.preventDefault();
+            alert('Por favor, ingrese un correo electrónico válido.');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

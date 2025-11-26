@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nueva Producción - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+<style>
+.info-section {
+    background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+    border-left: 4px solid #2196f3;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.info-section h4 {
+    color: #1976d2;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-section p {
+    color: #424242;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Dark mode para info section */
+body.dark .info-section {
+    background: linear-gradient(135deg, #1a237e, #4a148c);
+    border-left-color: #64b5f6;
+}
+
+body.dark .info-section h4 {
+    color: #90caf9;
+}
+
+body.dark .info-section p {
+    color: #e0e0e0;
+}
+
+/* Estilos adicionales para botones y formulario */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-primary:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #138496;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.badge-mini.pendiente {
+    background: linear-gradient(135deg, #ff9500, #ff6b00);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="card-form">
+        <div class="formulario">
+            <h2><i class='bx bx-cog'></i> Registrar Nueva Producción</h2>
+            
+            <form method="post" class="form-usuario" id="formNuevaProduccion">
+                {% csrf_token %}
+                
+                <!-- Información automática -->
+                <div class="info-section">
+                    <h4><i class='bx bx-info-circle'></i> Información</h4>
+                    <p>La fecha y hora de la producción se registran automáticamente al guardar.</p>
+                    <p>El usuario actual queda registrado como responsable de la producción.</p>
+                </div>
+
+                <!-- Asignar a Usuario (Opcional) -->
+                <div class="fila">
+                    <div class="campo full">
+                        <label for="asignado_a">
+                            <i class='bx bx-user'></i>
+                            Asignar Producción a Usuario (Opcional)
+                        </label>
+                        <select id="asignado_a" name="asignado_a" class="select">
+                            <option value="">Sin asignar</option>
+                            {% for usuario in usuarios %}
+                            <option value="{{ usuario.id_usuario }}">
+                                {{ usuario.nombre }} {{ usuario.apellido }} - {{ usuario.role }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="help-text">Seleccione un usuario para asignar esta producción</span>
+                    </div>
+                </div>
+
+                <!-- Observaciones (Opcional) -->
+                <div class="fila">
+                    <div class="campo full">
+                        <label for="observaciones">
+                            <i class='bx bx-note'></i>
+                            Observaciones (Opcional)
+                        </label>
+                        <textarea id="observaciones" 
+                                  name="observaciones" 
+                                  class="input" 
+                                  rows="3" 
+                                  placeholder="Ingrese observaciones sobre la producción...">{{ request.POST.observaciones }}</textarea>
+                        <span class="help-text">Detalles adicionales sobre la producción</span>
+                    </div>
+                </div>
+
+                <!-- Información del Usuario Actual -->
+                <div class="info-section">
+                    <h4><i class='bx bx-user-check'></i> Usuario Responsable</h4>
+                    <p><strong>Creado por:</strong> {{ user.nombre }} {{ user.apellido }} ({{ user.username }})</p>
+                    <p><strong>Rol:</strong> {{ user.role }}</p>
+                    <p><strong>Fecha de creación:</strong> Se registrará automáticamente</p>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="form-actions">
+                    <a href="{% url 'produccion:index' %}" class="btn btn-secondary">
+                        <i class='bx bx-x'></i>
+                        Cancelar
+                    </a>
+                    
+                    <button type="button" onclick="resetForm()" class="btn btn-warning">
+                        <i class='bx bx-refresh'></i>
+                        Limpiar Formulario
+                    </button>
+                    
+                    <button type="button" onclick="previewProduccion()" class="btn btn-info" id="preview-btn">
+                        <i class='bx bx-show'></i>
+                        Vista Previa
+                    </button>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class='bx bx-save'></i>
+                        Crear Producción
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('formNuevaProduccion');
+    const observaciones = document.getElementById('observaciones');
+    
+    // Validar observaciones
+    observaciones.addEventListener('input', function() {
+        const valor = this.value.trim();
+        if (valor.length > 500) {
+            this.setCustomValidity('Las observaciones no pueden exceder 500 caracteres');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    // Función para limpiar formulario
+    window.resetForm = function() {
+        if (confirm('¿Está seguro de que desea limpiar todos los campos?')) {
+            form.reset();
+            // Restablecer validaciones personalizadas
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => input.setCustomValidity(''));
+        }
+    };
+    
+    // Función para vista previa
+    window.previewProduccion = function() {
+        const asignadoA = document.getElementById('asignado_a');
+        const observaciones = document.getElementById('observaciones').value;
+        
+        const asignadoTexto = asignadoA.options[asignadoA.selectedIndex].text;
+        const fechaActual = new Date().toLocaleString('es-ES');
+        
+        const preview = `
+            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 10px 0;">
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">
+                    <i class='bx bx-cog'></i> Vista Previa de la Producción
+                </h3>
+                <div style="display: grid; gap: 10px;">
+                    <p><strong>Creado por:</strong> {{ user.nombre }} {{ user.apellido }}</p>
+                    <p><strong>Fecha estimada:</strong> ${fechaActual}</p>
+                    <p><strong>Asignado a:</strong> ${asignadoTexto === 'Sin asignar' ? 'Sin asignar' : asignadoTexto}</p>
+                    <p><strong>Estado inicial:</strong> <span class="badge-mini pendiente">Pendiente</span></p>
+                    <p><strong>Observaciones:</strong> ${observaciones || 'Sin observaciones'}</p>
+                </div>
+            </div>
+        `;
+        
+        // Mostrar en un modal
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = preview;
+        tempDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; max-width: 500px; width: 90%;';
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '<i class="bx bx-x"></i> Cerrar';
+        closeBtn.style.cssText = 'background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px; width: 100%;';
+        closeBtn.onclick = () => document.body.removeChild(tempDiv);
+        
+        tempDiv.appendChild(closeBtn);
+        document.body.appendChild(tempDiv);
+    };
+    
+    // Validación antes de enviar
+    form.addEventListener('submit', function(e) {
+        const observaciones = document.getElementById('observaciones').value.trim();
+        
+        if (observaciones.length > 500) {
+            e.preventDefault();
+            alert('Las observaciones no pueden exceder 500 caracteres');
+            return false;
+        }
+        
+        // Mostrar mensaje de confirmación
+        const confirmacion = confirm(
+            '¿Está seguro de crear esta nueva producción?\n\n' +
+            'Una vez creada, la producción quedará en estado "Pendiente" ' +
+            'y deberá ser aceptada para continuar con el proceso.'
+        );
+        
+        if (!confirmacion) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Deshabilitar el botón de envío
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Creando...';
+    });
+});
+</script>
+{% endblock %}

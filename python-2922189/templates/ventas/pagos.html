@@ -1,0 +1,1157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Pagos - Venta #{{ venta.id_ven }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+<style>
+    /* ===== ESTILOS ESPECÍFICOS PARA PAGOS ===== */
+    
+    /* Layout principal */
+    .home {
+        padding: 0;
+        margin: 0.25rem;
+        min-height: 100vh;
+        width: calc(100% - 0.5rem);
+        position: relative;
+        overflow-y: auto;
+    }
+
+    .contenedor {
+        max-width: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+    }
+
+    .pagos-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin: 0;
+        width: 100%;
+        margin-bottom: 2rem;
+    }
+
+    /* Header del módulo */
+    .encabezado {
+        background: linear-gradient(135deg, var(--primary-color, #dc3545), #c82333);
+        color: white;
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin: 0;
+    }
+
+    .encabezado h2 {
+        font-size: 1.8rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: white;
+    }
+
+    .acciones-principales {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-accion-header {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-accion-header:hover {
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* Información de la venta */
+    .info-venta-section {
+        background: linear-gradient(135deg, #f8f9fa, #ffffff);
+        padding: 2rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .info-venta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+    }
+
+    .info-card h4 {
+        color: #dc3545;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-item label {
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 0.4rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        color: #343a40;
+        font-weight: 600;
+        font-size: 1rem;
+        padding: 0.6rem 0.8rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
+
+    .info-value.destacado {
+        background: #28a745;
+        color: white;
+        font-weight: 700;
+    }
+
+    .info-value.total {
+        background: #dc3545;
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    /* Tabla de pagos */
+    .pagos-section {
+        padding: 2rem;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #dc3545;
+    }
+
+    .section-header h3 {
+        color: #dc3545;
+        font-size: 1.4rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Estilos de tabla mejorados */
+    .wrapper {
+        overflow-x: auto;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+        background: white;
+    }
+
+    /* Encabezado tabla Historial de Pagos en rojo */
+    .pagos-section .table thead {
+        background: linear-gradient(135deg,#dc2626,#b91c1c);
+        color: #fff;
+    }
+
+    .table th {
+        padding: 1rem 1.2rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        border: none;
+    }
+
+    .table td {
+        padding: 1rem 1.2rem;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+    }
+
+    .table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+
+    /* Solo encabezado del historial en rojo; cuerpo mantiene estilo claro */
+    .pagos-section .table thead th {color:#fff;}
+    .pagos-section .table tbody tr {background-color:#fff;}
+    .pagos-section .table tbody tr:nth-child(even){background-color:#fff;}
+    .pagos-section .table tbody tr:hover {background-color:#f8f9fa;}
+
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Elementos de datos mejorados */
+    .fecha-display {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .monto-display {
+        font-weight: 700;
+        color: #28a745;
+        font-size: 1rem;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .tipo-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: capitalize;
+        letter-spacing: 0.3px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+        border: 1px solid rgba(23, 162, 184, 0.2);
+    }
+
+    /* Estado vacío */
+    .empty-state-table {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+
+    .empty-state-table i {
+        font-size: 3rem;
+        opacity: 0.5;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    /* Formulario de nuevo pago */
+    .nuevo-pago-section {
+        background: linear-gradient(135deg, #e3f2fd, #f5f5f5);
+        padding: 2rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.6rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-input, .form-select {
+        padding: 0.8rem 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .form-input:focus, .form-select:focus {
+        outline: none;
+        border-color: #dc3545;
+        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+        background: #fefefe;
+    }
+
+    .form-select {
+        cursor: pointer;
+    }
+
+    /* Botones mejorados */
+    .botones-container {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        background: linear-gradient(135deg, #20c997, #28a745);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #495057);
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        background: linear-gradient(135deg, #495057, #6c757d);
+    }
+
+    /* Botón rojo Ver Recetas dentro del formulario (movido aquí desde el body) */
+    .btn-recetas {
+        background: linear-gradient(135deg,#dc3545,#b71c1c);
+        color:#fff;
+        border:none;
+        padding:0.8rem 1.5rem;
+        border-radius:8px;
+        font-weight:600;
+        font-size:0.95rem;
+        cursor:pointer;
+        transition:all .3s ease;
+        display:flex;
+        align-items:center;
+        gap:.5rem;
+        text-decoration:none;
+        position:relative;
+        overflow:hidden;
+    }
+    .btn-recetas:before {
+        content:'';
+        position:absolute;
+        inset:0;
+        background:linear-gradient(135deg,rgba(255,255,255,0.18),rgba(255,255,255,0));
+        opacity:0;transition:opacity .4s ease;
+    }
+    .btn-recetas:hover:before {opacity:1;}
+    .btn-recetas:hover {
+        transform:translateY(-2px);
+        box-shadow:0 4px 14px rgba(220,53,69,0.35);
+        background:linear-gradient(135deg,#b71c1c,#dc3545);
+        text-decoration:none;
+    }
+    .btn-recetas i {font-size:1.1rem;}
+
+    .btn-delete {
+        width: 32px;
+        height: 32px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .btn-delete:hover {
+        background: #dc3545;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+    }
+
+    /* Alertas mejoradas */
+    .alert {
+        padding: 1rem 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 500;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        color: #856404;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+        color: #0c5460;
+    }
+
+    .alert-danger {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+    }
+
+    .alert i {
+        font-size: 1.2rem;
+    }
+
+    /* Estado de venta completamente pagada */
+    .venta-pagada {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        margin: 2rem;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+    }
+
+    .venta-pagada i {
+        font-size: 3rem;
+        color: #28a745;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .venta-pagada h3 {
+        color: #155724;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+    .venta-pagada p {
+        color: #155724;
+        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+    }
+
+    /* Footer info */
+    .footer-info {
+        text-align: center;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    /* ===== Modal Recetas (estilos nuevos) ===== */
+    .btn-accion-header.recetas {
+        background: linear-gradient(135deg,#dc3545,#b71c1c);
+        border: 1px solid rgba(255,255,255,0.35);
+    }
+    .btn-accion-header.recetas:hover {
+        background: linear-gradient(135deg,#b71c1c,#dc3545);
+    }
+
+    .recetas-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(20,20,25,0.6);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 3.5rem 1.25rem 2rem;
+        z-index: 2000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .28s ease;
+    }
+    .recetas-modal-overlay.is-open {opacity:1;pointer-events: auto;}
+
+    .recetas-modal {
+        width: 100%;
+        max-width: 1150px; /* ampliado para nueva disposición */
+        background: linear-gradient(135deg,#ffffff,#fafafa 55%);
+        border-radius: 20px;
+        box-shadow: 0 18px 42px -5px rgba(0,0,0,0.35);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transform: translateY(25px) scale(.98);
+        opacity: 0;
+        animation: modalIn .45s cubic-bezier(.16,.8,.24,1) forwards;
+    }
+    @keyframes modalIn {
+        to {transform: translateY(0) scale(1);opacity:1;}
+    }
+    @keyframes modalOut {
+        to {transform: translateY(30px) scale(.96);opacity:0;}
+    }
+    .recetas-modal-header {
+        padding: 1.4rem 1.8rem 1.1rem;
+        background: linear-gradient(135deg,#dc3545,#b71c1c);
+        color:#fff;
+        display:flex;
+        align-items:center;
+        gap:.65rem;
+    }
+    .recetas-modal-header h3 {
+        margin:0;
+        font-size:1.35rem;
+        font-weight:600;
+        display:flex;
+        align-items:center;
+        gap:.55rem;
+    }
+    .recetas-modal-header i {font-size:1.4rem;}
+    .recetas-modal-close {
+        position:absolute;
+        top:.75rem;right:.75rem;
+        width:40px;height:40px;
+        border-radius:12px;
+        border:none;
+        background:rgba(255,255,255,0.18);
+        color:#fff;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        cursor:pointer;
+        backdrop-filter: blur(3px);
+        transition:background .25s ease, transform .25s ease;
+    }
+    .recetas-modal-close:hover {background:rgba(255,255,255,0.32);transform:scale(1.07);}
+    .recetas-modal-close i {font-size:1.25rem;}
+
+    .recetas-modal-body {
+        padding:1.4rem 1.8rem 1.2rem;
+        overflow-y:auto;
+        max-height:55vh;
+        scrollbar-width: thin;
+    }
+    .recetas-modal-body::-webkit-scrollbar {width:8px;}
+    .recetas-modal-body::-webkit-scrollbar-track {background:#f1f1f1;border-radius:10px;}
+    .recetas-modal-body::-webkit-scrollbar-thumb {background:#c2c2c2;border-radius:10px;}
+    .recetas-modal-body::-webkit-scrollbar-thumb:hover {background:#a5a5a5;}
+
+    .recetas-description {margin:.35rem 0 1rem;color:#555;font-size:.9rem;line-height:1.35;}
+
+    .recetas-table-wrapper {border:1px solid #e3e3e8;border-radius:14px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.06);}
+    .recetas-table {width:100%;border-collapse:collapse;font-size:.83rem;background:#fff;}
+    .recetas-table thead tr {background:linear-gradient(135deg,#f4f4f8,#ececec);}
+    .recetas-table th {text-align:left;font-weight:600;padding:.75rem .9rem;font-size:.7rem;letter-spacing:.75px;text-transform:uppercase;color:#5a5d66;white-space:nowrap;}
+    .recetas-table th:last-child {text-align:right;}
+    /* Refinado fila receta: layout más limpio */
+    .receta-celda-flex {display:flex;align-items:center;justify-content:space-between;width:100%;padding:.4rem .4rem;gap:.75rem;}
+    .receta-nombre {font-weight:600;color:#222;font-size:.82rem;letter-spacing:.25px;}
+    .receta-meta {display:flex;align-items:center;gap:.45rem;}
+    .receta-cantidad-pill {background:#343a40;color:#fff;padding:.22rem .48rem;border-radius:6px;font-size:.6rem;font-weight:700;letter-spacing:.45px;display:inline-flex;align-items:center;}
+    .receta-subtotal-pill {background:#dc3545;color:#fff;padding:.26rem .6rem;border-radius:6px;font-size:.65rem;font-weight:700;letter-spacing:.4px;}
+    .recetas-table td.celda-receta {padding:.75rem .9rem;}
+    .recetas-table td {padding:.65rem .9rem;border-top:1px solid #eceef2;vertical-align:middle;}
+        /* Forzar visibilidad columnas del modal por si algún CSS global oculta */
+        .recetas-table .col-receta,
+        .recetas-table .col-cantidad,
+        .recetas-table .col-unitario,
+        .recetas-table .col-subtotal,
+        .recetas-table .col-porcentaje,
+        .recetas-table .celda-receta,
+        .recetas-table .celda-cantidad,
+        .recetas-table .celda-unitario,
+        .recetas-table .celda-subtotal,
+        .recetas-table .celda-porcentaje {display: table-cell !important;}
+        .recetas-table .celda-subtotal strong {background:#dc3545;color:#fff;padding:.25rem .45rem;border-radius:6px;font-weight:600;letter-spacing:.3px;}
+    .recetas-table tbody tr {transition:background .18s ease;}
+    .recetas-table tbody tr:hover {background:#f9fafc;}
+    .recetas-table td.numeric {text-align:right;font-variant-numeric:tabular-nums;}
+    .recetas-table td strong {font-weight:600;color:#222;}
+    .recetas-tag {
+        display:inline-block;
+        padding:.35rem .55rem;
+        background:#dc3545;
+        color:#fff;
+        border-radius:8px;
+        font-size:.65rem;
+        font-weight:600;
+        letter-spacing:.5px;
+        text-transform:uppercase;
+    }
+    .recetas-empty {padding:1.2rem;text-align:center;color:#666;font-size:.85rem;}
+    .recetas-table tfoot td {background:#fafbfc;font-weight:600;border-top:2px solid #dfe3e8;}
+    .recetas-table tfoot td.total-label {text-align:right;}
+    .recetas-table tfoot td.total-value {text-align:right;font-size:.9rem;font-weight:700;color:#222;}
+
+    .recetas-modal-footer {
+        padding: .9rem 1.5rem 1.1rem;
+        background: linear-gradient(135deg,#f7f7fb,#f1f1f5);
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:1rem;
+        font-size:.7rem;
+        letter-spacing:.5px;
+        color:#555;
+        border-top:1px solid #e4e4ea;
+    }
+    .modal-badge-total {
+        background:#dc3545;
+        color:#fff;
+        padding:.45rem .75rem;
+        border-radius:10px;
+        font-size:.75rem;
+        font-weight:600;
+        letter-spacing:.5px;
+        display:inline-flex;
+        align-items:center;
+        gap:.4rem;
+        box-shadow:0 2px 6px rgba(220,53,69,0.25);
+    }
+    .modal-badge-total i {font-size:1rem;}
+
+    @media (max-width: 720px) {
+        .recetas-modal {max-width:92%;border-radius:16px;}
+        .recetas-modal-header h3 {font-size:1.05rem;}
+        .recetas-table th {font-size:.58rem;padding:.55rem .6rem;}
+        .recetas-table td {padding:.55rem .6rem;font-size:.7rem;}
+        .recetas-modal-body {padding:1rem 1.2rem;max-height:60vh;}
+        .recetas-modal-footer {flex-direction:column;align-items:flex-start;}
+        .modal-badge-total {width:100%;justify-content:center;}
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .info-venta-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .encabezado {
+            flex-direction: column;
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .acciones-principales {
+            justify-content: center;
+        }
+        
+        .info-venta-section,
+        .pagos-section,
+        .nuevo-pago-section {
+            padding: 1rem;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .botones-container {
+            flex-direction: column;
+        }
+        
+        .btn-primary,
+        .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .wrapper {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="contenedor">
+        <div class="pagos-container">
+            
+            <!-- Header del módulo -->
+            <div class="encabezado">
+                <h2>
+                    <i class='bx bx-money'></i>
+                    Gestión de Pagos - Venta #{{ venta.id_ven }}
+                </h2>
+                <div class="acciones-principales">
+                    <a href="{% url 'ventas:detalle' venta.id_ven %}" class="btn-accion-header">
+                        <i class='bx bx-show'></i>
+                        Ver Detalle
+                    </a>
+                    <a href="{% url 'ventas:index' %}" class="btn-accion-header">
+                        <i class='bx bx-arrow-back'></i>
+                        Volver a Ventas
+                    </a>
+                    
+                    
+                    
+                </div>
+            </div>
+
+            <!-- Mensajes -->
+            {% if messages %}
+                <div style="padding: 1rem 2rem;">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {% if message.tags == 'success' %}
+                            <i class='bx bx-check-circle'></i>
+                        {% elif message.tags == 'warning' %}
+                            <i class='bx bx-error-circle'></i>
+                        {% elif message.tags == 'error' %}
+                            <i class='bx bx-x-circle'></i>
+                        {% else %}
+                            <i class='bx bx-info-circle'></i>
+                        {% endif %}
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Información de la venta -->
+            <div class="info-venta-section">
+                <div class="info-venta-grid">
+                    <!-- Información básica -->
+                    <div class="info-card">
+                        <h4><i class='bx bx-info-circle'></i> Información Básica</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>ID Venta</label>
+                                <div class="info-value">#{{ venta.id_ven }}</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Cliente</label>
+                                <div class="info-value">{{ venta.cliente.nombre }}</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Fecha</label>
+                                <div class="info-value">{{ venta.fecha|date:"d/m/Y H:i" }}</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Estado</label>
+                                <div class="info-value destacado">{{ venta.estado }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de pagos -->
+                    <div class="info-card">
+                        <h4><i class='bx bx-calculator'></i> Resumen de Pagos</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>Total Venta</label>
+                                <div class="info-value total">${{ venta.total|floatformat:0 }}</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Total Pagado</label>
+                                <div class="info-value destacado">${{ total_pagado|floatformat:0 }}</div>
+                            </div>
+                            <div class="info-item">
+                                <label>Saldo Pendiente</label>
+                                <div class="info-value {% if saldo_pendiente <= 0 %}destacado{% endif %}">
+                                    ${{ saldo_pendiente|floatformat:0 }}
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <label>Número de Pagos</label>
+                                <div class="info-value">{{ pagos.count }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historial de Pagos -->
+            <div class="pagos-section">
+                <div class="section-header">
+                    <h3><i class='bx bx-history'></i> Historial de Pagos</h3>
+                </div>
+                
+                <div class="wrapper">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th><i class='bx bx-calendar'></i> Fecha</th>
+                                <th><i class='bx bx-money'></i> Monto</th>
+                                <th><i class='bx bx-tag'></i> Tipo de Pago</th>
+                                <th><i class='bx bx-cog'></i> Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in pagos %}
+                            <tr>
+                                <td>
+                                    <span class="fecha-display">
+                                        {{ p.fecha_pago|date:"d/m/Y H:i" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="monto-display">
+                                        ${{ p.monto|floatformat:0 }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="tipo-badge">
+                                        <i class='bx {% if p.tipo_pago == "total" %}bx-check-circle{% else %}bx-credit-card{% endif %}'></i>
+                                        {{ p.get_tipo_pago_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{% url 'ventas:eliminar_pago' p.id_pago %}" 
+                                          style="display: inline;"
+                                          onsubmit="return confirm('¿Está seguro de eliminar este pago de ${{ p.monto|floatformat:0 }}?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-delete" title="Eliminar pago">
+                                            <i class='bx bx-trash'></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="empty-state-table">
+                                    <i class='bx bx-money'></i>
+                                    <h4>No hay pagos registrados</h4>
+                                    <p>Esta venta aún no tiene pagos asociados</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Registrar nuevo pago -->
+            {% if saldo_pendiente > 0 %}
+            <div class="nuevo-pago-section">
+                <div class="form-container">
+                    <div class="section-header">
+                        <h3><i class='bx bx-plus-circle'></i> Registrar Nuevo Pago</h3>
+                    </div>
+                    
+                    <form method="POST" action="{% url 'ventas:registrar_pago' venta.id_ven %}">
+                        {% csrf_token %}
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="monto">
+                                    <i class='bx bx-money'></i> Monto a pagar
+                                </label>
+                                <input type="number" 
+                                       id="monto"
+                                       name="monto" 
+                                       class="form-input" 
+                                       step="0.01" 
+                                       min="0.01" 
+                                       max="{{ saldo_pendiente }}" 
+                                       placeholder="Ingrese el monto del pago"
+                                       required>
+                                <small style="color: #6c757d; font-size: 0.8rem; margin-top: 0.3rem; display: block;">
+                                    Máximo disponible: ${{ saldo_pendiente|floatformat:0 }}
+                                </small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="tipo_pago_display">
+                                    <i class='bx bx-tag'></i> Tipo de pago
+                                </label>
+                                <input type="text" id="tipo_pago_display" class="form-input" value="" readonly style="background:#f5f5f5;cursor:not-allowed;">
+                                <input type="hidden" id="tipo_pago" name="tipo_pago" value="">
+                            </div>
+                        </div>
+
+                        <div class="botones-container">
+                            <div id="monto-error" style="color: #d9534f; font-size: 0.9rem; margin-top: 0.5rem; display: none;"></div>
+                            <button type="submit" class="btn-primary" id="btn-registrar-pago">
+                                <i class='bx bx-check'></i> 
+                                Registrar Pago
+                            </button>
+                            <button type="button" id="btn-ver-recetas" class="btn-recetas" aria-haspopup="dialog" aria-controls="panel-recetas">
+                                <i class='bx bx-food-menu'></i>
+                                Ver Recetas
+                            </button>
+                            <a href="{% url 'ventas:detalle' venta.id_ven %}" class="btn-secondary">
+                                <i class='bx bx-arrow-back'></i> 
+                                Volver al Detalle
+                            </a>
+                            <script>
+                                function actualizarTipoPago() {
+                                    var montoInput = document.getElementById('monto');
+                                    var monto = parseFloat(montoInput.value.replace(',', '.')) || 0;
+                                    var saldo = parseFloat("{{ saldo_pendiente|floatformat:2 }}".replace(',', '.'));
+                                    var tipo = '';
+                                    var display = '';
+                                    var errorDiv = document.getElementById('monto-error');
+                                    var btnRegistrar = document.getElementById('btn-registrar-pago');
+                                    var min50 = saldo * 0.5;
+                                    var error = false;
+
+                                    if (monto > 0) {
+                                        if (monto < min50) {
+                                            errorDiv.style.display = 'block';
+                                            errorDiv.textContent = 'El monto a pagar debe ser mínimo el 50% ($' + min50.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + ')';
+                                            btnRegistrar.disabled = true;
+                                            tipo = '';
+                                            display = '';
+                                            error = true;
+                                        } else if (monto < saldo) {
+                                            tipo = 'abono';
+                                            display = '💳 Abono parcial';
+                                            errorDiv.style.display = 'none';
+                                            btnRegistrar.disabled = false;
+                                        } else if (monto === saldo) {
+                                            tipo = 'total';
+                                            display = '💰 Pago total';
+                                            errorDiv.style.display = 'none';
+                                            btnRegistrar.disabled = false;
+                                        } else {
+                                            tipo = '';
+                                            display = 'Monto excede el saldo';
+                                            btnRegistrar.disabled = true;
+                                            errorDiv.style.display = 'block';
+                                            errorDiv.textContent = 'El monto no puede exceder el saldo pendiente.';
+                                            error = true;
+                                        }
+                                    } else {
+                                        errorDiv.style.display = 'none';
+                                        btnRegistrar.disabled = true;
+                                    }
+
+                                    if (!error && monto >= min50 && monto <= saldo) {
+                                        errorDiv.style.display = 'none';
+                                        btnRegistrar.disabled = false;
+                                    }
+                                    document.getElementById('tipo_pago').value = tipo;
+                                    document.getElementById('tipo_pago_display').value = display;
+                                }
+                                document.getElementById('monto').addEventListener('input', actualizarTipoPago);
+                                window.addEventListener('DOMContentLoaded', actualizarTipoPago);
+                            </script>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="venta-pagada">
+                <i class='bx bx-check-circle'></i>
+                <h3>¡Venta Completamente Pagada!</h3>
+                <p>Esta venta ha sido pagada en su totalidad</p>
+                <a href="{% url 'ventas:detalle' venta.id_ven %}" class="btn-primary">
+                    <i class='bx bx-show'></i> 
+                    Ver Detalle de Venta
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Modal / Panel de Recetas Vendidas -->
+            <div id="panel-recetas" class="recetas-modal-overlay" aria-hidden="true">
+                <div class="recetas-modal" role="dialog" aria-modal="true" aria-labelledby="recetasModalTitle">
+                    <div class="recetas-modal-header">
+                        <h3 id="recetasModalTitle"><i class='bx bx-food-menu'></i> Recetas de la Venta #{{ venta.id_ven }}</h3>
+                        <button id="cerrar-recetas" class="recetas-modal-close" type="button" aria-label="Cerrar modal">
+                            <i class='bx bx-x'></i>
+                        </button>
+                    </div>
+                    <div class="recetas-modal-body">
+                        <div class="recetas-table-wrapper">
+                            <table class="recetas-table" aria-describedby="recetasModalTitle">
+                                <thead>
+                                    <tr>
+                                        <th class="col-receta">Receta × Cantidad / Subtotal</th>
+                                        <th class="col-unitario" style="text-align:right;">Unit.</th>
+                                        <th class="col-porcentaje" style="text-align:right;">% Venta</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for vr in recetas_venta %}
+                                    <tr class="fila-receta">
+                                        <td class="celda-receta">
+                                            <div class="receta-celda-flex">
+                                                <span class="receta-nombre">{{ vr.receta.nombre }}</span>
+                                                <div class="receta-meta">
+                                                    <span class="receta-cantidad-pill" title="Cantidad de esta receta">× {{ vr.cantidad }}</span>
+                                                    <span class="receta-subtotal-pill" title="Subtotal de esta receta">$ {{ vr.subtotal|floatformat:0 }}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="numeric celda-unitario">${{ vr.precio|floatformat:0 }}</td>
+                                        <td class="numeric celda-porcentaje">{% if venta.total > 0 %}{{ vr.porcentaje_total_venta|floatformat:1 }}%{% endif %}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="3" class="recetas-empty">No hay recetas asociadas a esta venta.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td class="total-label" style="text-align:right;">Total venta</td>
+                                        <td class="total-value" style="text-align:right;">${{ venta.total|floatformat:0 }}</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="recetas-modal-footer">
+                        <span>Presiona ESC para cerrar • Modal recetas</span>
+                        <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
+                            <span class="modal-badge-total"><i class='bx bx-wallet'></i> Total venta: ${{ venta.total|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                (function(){
+                    var btn = document.getElementById('btn-ver-recetas');
+                    var overlay = document.getElementById('panel-recetas');
+                    var closeBtn = document.getElementById('cerrar-recetas');
+                    var focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+                    var lastFocused = null;
+
+                    function trapFocus(modal){
+                        var focusable = modal.querySelectorAll(focusableSelectors);
+                        if(!focusable.length) return;
+                        var first = focusable[0];
+                        var last = focusable[focusable.length - 1];
+                        first.focus();
+                        modal.addEventListener('keydown', function(e){
+                            if(e.key === 'Tab'){
+                                if(e.shiftKey){
+                                    if(document.activeElement === first){e.preventDefault();last.focus();}
+                                } else {
+                                    if(document.activeElement === last){e.preventDefault();first.focus();}
+                                }
+                            }
+                        });
+                    }
+
+                    function openModal(){
+                        if(overlay.classList.contains('is-open')) return;
+                        lastFocused = document.activeElement;
+                        overlay.classList.add('is-open');
+                        overlay.setAttribute('aria-hidden','false');
+                        document.body.style.overflow='hidden';
+                        trapFocus(overlay.querySelector('.recetas-modal'));
+                    }
+                    function closeModal(){
+                        overlay.classList.remove('is-open');
+                        overlay.setAttribute('aria-hidden','true');
+                        document.body.style.overflow='';
+                        // Animación opcional de salida
+                        var modal = overlay.querySelector('.recetas-modal');
+                        modal.style.animation='modalOut .35s cubic-bezier(.4,.15,.3,1) forwards';
+                        setTimeout(function(){modal.style.animation='';},360);
+                        if(lastFocused) lastFocused.focus();
+                    }
+                    if(btn){btn.addEventListener('click', openModal);}    
+                    if(closeBtn){closeBtn.addEventListener('click', closeModal);}  
+                    overlay.addEventListener('click', function(e){if(e.target === overlay){closeModal();}});
+                    document.addEventListener('keydown', function(e){if(e.key==='Escape' && overlay.classList.contains('is-open')){closeModal();}});
+                })();
+            </script>
+
+            <!-- Footer info -->
+            <div class="footer-info" style="margin-bottom: 3rem;">
+                <i class='bx bx-time'></i>
+                <strong>Última actualización:</strong> {{ "now"|date:"d/m/Y H:i" }}
+            </div>
+            
+        </div>
+    </div>
+</section>
+{% endblock %}

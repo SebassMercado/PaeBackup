@@ -1,0 +1,531 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Producción - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+<style>
+.production-detail-header {
+    background: linear-gradient(135deg, #dc3545, #b71c1c);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+}
+
+.production-detail-header h2 {
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 2rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.detail-card {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.detail-card h4 {
+    margin: 0 0 10px 0;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.detail-card .value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.status-badge {
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:6px;
+    font-weight:600;
+    font-size:0.85rem;
+}
+
+.timeline-item {
+    position: relative;
+    padding: 20px 0 20px 80px;
+    margin-bottom: 20px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 22px;
+    top: 25px;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: #dc3545;
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px #dc3545;
+}
+
+.timeline-item.completed::before {
+    background: #28a745;
+    box-shadow: 0 0 0 3px #28a745;
+}
+
+.timeline-item.current::before {
+    background: #ffc107;
+    box-shadow: 0 0 0 3px #ffc107;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #dc3545;
+}
+
+.timeline-item.completed .timeline-content {
+    border-left-color: #28a745;
+    background: #d4edda;
+}
+
+.timeline-item.current .timeline-content {
+    border-left-color: #ffc107;
+    background: #fff3cd;
+}
+
+.timeline-content h4 {
+    margin: 0 0 10px 0;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.timeline-content p {
+    margin: 0;
+    color: #6c757d;
+    line-height: 1.6;
+}
+
+.timeline-date {
+    font-weight: 600;
+    color: #dc3545;
+    font-size: 0.9rem;
+}
+
+.completed .timeline-date {
+    color: #28a745;
+}
+
+.current .timeline-date {
+    color: #ffc107;
+}
+
+.actions-section {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    min-width: 150px;
+    justify-content: center;
+}
+
+.btn-aceptar {
+    background: #007bff;
+    color: white;
+}
+
+.btn-finalizar {
+    background: #28a745;
+    color: white;
+}
+
+.btn-reintentar {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-recetas {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-action:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+/* Dark mode */
+body.dark .timeline-section,
+body.dark .actions-section {
+    background: #1f1f1f;
+    color: #e0e0e0;
+}
+
+body.dark .timeline-content {
+    background: #2a2a2a;
+    color: #e0e0e0;
+}
+
+body.dark .timeline-item.completed .timeline-content {
+    background: #1e4620;
+}
+
+body.dark .timeline-item.current .timeline-content {
+    background: #4a3c00;
+}
+
+body.dark .timeline-content h4 {
+    color: #ffffff;
+}
+
+body.dark .timeline-content p {
+    color: #b0b0b0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-action {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .timeline-item {
+        padding-left: 60px;
+    }
+    
+    .timeline::before {
+        left: 20px;
+    }
+    
+    .timeline-item::before {
+        left: 12px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <!-- Header de Detalle -->
+    <div class="production-detail-header">
+        <h2><i class='bx bx-cog'></i> Producción #{{ produccion.id_proc }}</h2>
+        <div class="detail-grid">
+            <div class="detail-card">
+                <h4><i class='bx bx-flag'></i> Estado</h4>
+                <p class="value">
+                    <span class="status-badge 
+                        {% if produccion.estado == 'Pendiente' %}status-pendiente
+                        {% elif produccion.estado == 'Aceptada' %}status-aceptada
+                        {% elif produccion.estado == 'Finalizada' %}status-finalizada
+                        {% elif produccion.estado == 'Esperando insumos' %}status-esperando
+                        {% endif %}">{{ produccion.estado }}</span>
+                </p>
+            </div>
+            
+            <div class="detail-card">
+                <h4><i class='bx bx-calendar'></i> Fecha de Creación</h4>
+                <p class="value">{{ produccion.fecha_hora|date:"d/m/Y H:i:s" }}</p>
+            </div>
+            
+            <div class="detail-card">
+                <h4><i class='bx bx-user'></i> Creado por</h4>
+                <p class="value">{{ produccion.nombre_completo_creador }}</p>
+            </div>
+            
+            <div class="detail-card">
+                <h4><i class='bx bx-user-check'></i> Asignado a</h4>
+                <p class="value">
+                    {% if produccion.usuario_asignado %}
+                        {{ produccion.nombre_completo_asignado }}
+                    {% else %}
+                        Sin asignar
+                    {% endif %}
+                </p>
+            </div>
+            <div class="detail-card">
+                <h4><i class='bx bx-comment-detail'></i> Observación</h4>
+                <p class="value" style="white-space:pre-wrap; max-height:160px; overflow:auto;">
+                    {% if produccion.observacion %}
+                        {{ produccion.observacion }}
+                    {% else %}
+                        Sin observación
+                    {% endif %}
+                </p>
+            </div>
+            <div class="detail-card" style="grid-column:1/-1;">
+                <h4 style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><i class='bx bx-comment'></i> Observación Final (expandir)</span>
+                    <button type="button" id="toggleObsDetalle" style="background:#dc3545; color:#fff; border:none; padding:4px 10px; border-radius:6px; font-size:0.7rem; cursor:pointer;">Ver</button>
+                </h4>
+                <div id="obsContentDetalle" style="white-space:pre-wrap; max-height:0; overflow:hidden; transition:max-height .3s ease; font-size:0.85rem;">
+                    {% if produccion.observacion %}
+                        {{ produccion.observacion }}
+                    {% else %}
+                        <em>Sin observación registrada</em>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline de Producción -->
+    <div class="timeline-section">
+        <h3 class="timeline-title">
+            <i class='bx bx-time'></i>
+            Cronología de la Producción
+        </h3>
+        
+        <div class="timeline">
+            <!-- Creación -->
+            <div class="timeline-item completed">
+                <div class="timeline-content">
+                    <h4>
+                        <i class='bx bx-plus-circle'></i>
+                        Producción Creada
+                    </h4>
+                    <p>La producción fue registrada en el sistema por {{ produccion.nombre_completo_creador }}</p>
+                    <div class="timeline-date">{{ produccion.fecha_hora|date:"d/m/Y H:i:s" }}</div>
+                </div>
+            </div>
+            
+            <!-- Aceptación -->
+            <div class="timeline-item {% if produccion.fecha_aceptacion %}completed{% elif produccion.estado == 'Pendiente' %}current{% endif %}">
+                <div class="timeline-content">
+                    <h4>
+                        <i class='bx bx-check-circle'></i>
+                        Producción Aceptada
+                    </h4>
+                    <p>
+                        {% if produccion.fecha_aceptacion %}
+                            La producción fue aceptada y está en proceso
+                        {% else %}
+                            Esperando aceptación para iniciar el proceso
+                        {% endif %}
+                    </p>
+                    <div class="timeline-date">
+                        {% if produccion.fecha_aceptacion %}
+                            {{ produccion.fecha_aceptacion|date:"d/m/Y H:i:s" }}
+                        {% else %}
+                            Pendiente
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Finalización -->
+            <div class="timeline-item {% if produccion.fecha_finalizacion %}completed{% elif produccion.estado == 'Aceptada' or produccion.estado == 'Esperando insumos' %}current{% endif %}">
+                <div class="timeline-content">
+                    <h4>
+                        <i class='bx bx-flag-checkered'></i>
+                        Producción Finalizada
+                    </h4>
+                    <p>
+                        {% if produccion.fecha_finalizacion %}
+                            La producción fue completada exitosamente
+                        {% elif produccion.estado == 'Esperando insumos' %}
+                            Esperando disponibilidad de insumos para finalizar
+                        {% elif produccion.estado == 'Aceptada' %}
+                            En proceso, listo para finalizar
+                        {% else %}
+                            Pendiente de finalización
+                        {% endif %}
+                    </p>
+                    <div class="timeline-date">
+                        {% if produccion.fecha_finalizacion %}
+                            {{ produccion.fecha_finalizacion|date:"d/m/Y H:i:s" }}
+                        {% else %}
+                            Pendiente
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Disponibles -->
+    <div class="actions-section">
+        <h3><i class='bx bx-cog'></i> Acciones Disponibles</h3>
+        <div class="action-buttons">
+            
+            {% if produccion.estado == 'Pendiente' %}
+            <button class="btn-action btn-aceptar cambiar-estado" 
+                    data-produccion-id="{{ produccion.id_proc }}"
+                    data-accion="aceptar">
+                <i class='bx bx-check'></i>
+                Aceptar Producción
+            </button>
+            {% endif %}
+            
+            {% if produccion.estado == 'Aceptada' %}
+            <button class="btn-action btn-finalizar cambiar-estado" 
+                    data-produccion-id="{{ produccion.id_proc }}"
+                    data-accion="finalizar">
+                <i class='bx bx-flag'></i>
+                Finalizar Producción
+            </button>
+            {% endif %}
+            
+            {% if produccion.estado == 'Esperando insumos' %}
+            <button class="btn-action btn-reintentar cambiar-estado" 
+                    data-produccion-id="{{ produccion.id_proc }}"
+                    data-accion="reintentar">
+                <i class='bx bx-refresh'></i>
+                Reintentar Finalización
+            </button>
+            {% endif %}
+            
+            <a href="{% url 'produccion:recetas' produccion.id_proc %}" class="btn-action btn-recetas">
+                <i class='bx bx-basket'></i>
+                Gestionar Recetas
+            </a>
+        </div>
+    </div>
+
+    <!-- Botón Volver -->
+    <div class="volver-section">
+        <a href="{% url 'produccion:index' %}" class="btn-back">
+            <i class='bx bx-chevron-left'></i> 
+            Volver a Producciones
+        </a>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const produccionId = {{ produccion.id_proc }};
+    const estadoBadge = document.querySelector('.status-badge');
+    const accionesContainer = document.querySelector('.action-buttons');
+
+    function actualizarEstadoUI(nuevo){
+        if (!estadoBadge) return;
+        estadoBadge.textContent = nuevo;
+        estadoBadge.className = 'status-badge ' + (
+            nuevo === 'Pendiente' ? 'status-pendiente' :
+            nuevo === 'Aceptada' ? 'status-aceptada' :
+            nuevo === 'Finalizada' ? 'status-finalizada' :
+            nuevo === 'Esperando insumos' ? 'status-esperando' : ''
+        );
+    }
+
+    function enviarAccion(accion, observacion=''){
+        const btn = document.querySelector(`.cambiar-estado[data-produccion-id='${produccionId}'][data-accion='${accion}']`);
+        if (btn){ btn.disabled = true; btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> ...`; }
+        fetch(`/produccion/api/cambiar-estado/${produccionId}/`,{
+            method:'POST',
+            headers:{'Content-Type':'application/json','X-CSRFToken':csrftoken},
+            body:JSON.stringify({accion, observacion})
+        })
+        .then(r=>r.json())
+        .then(data=>{
+            if (data.estado){
+                actualizarEstadoUI(data.estado);
+            }
+            console.log('[INFO]', data.message || 'Acción procesada');
+            if (btn){ btn.remove(); }
+            // Reinsert botón según nuevo estado
+            if (accionesContainer){
+                if (data.estado==='Pendiente'){
+                    accionesContainer.innerHTML = `<button class='btn-action btn-aceptar cambiar-estado' data-produccion-id='${produccionId}' data-accion='aceptar'><i class='bx bx-check'></i>Aceptar Producción</button>`;
+                } else if (data.estado==='Aceptada'){
+                    accionesContainer.innerHTML = `<button class='btn-action btn-finalizar cambiar-estado' data-produccion-id='${produccionId}' data-accion='finalizar'><i class='bx bx-flag'></i>Finalizar Producción</button>`;
+                } else if (data.estado==='Esperando insumos'){
+                    accionesContainer.innerHTML = `<button class='btn-action btn-reintentar cambiar-estado' data-produccion-id='${produccionId}' data-accion='finalizar'><i class='bx bx-refresh'></i>Reintentar Finalización</button>`;
+                } else if (data.estado==='Finalizada') {
+                    accionesContainer.innerHTML = '';
+                }
+                accionesContainer.innerHTML += `<a href='/produccion/${produccionId}/recetas/' class='btn-action btn-recetas'><i class='bx bx-basket'></i>Gestionar Recetas</a>`;
+                bindBotones();
+            }
+        })
+        .catch(e=>{ console.error(e); })
+    }
+
+    function bindBotones(){
+        document.querySelectorAll('.cambiar-estado').forEach(b=>{
+            b.onclick = ()=>{
+                const accion = b.getAttribute('data-accion');
+                if (accion==='finalizar'){
+                    const obs = prompt('Observación (opcional):','') || '';
+                    enviarAccion('finalizar', obs.trim());
+                } else {
+                    enviarAccion(accion);
+                }
+            };
+        });
+    }
+    bindBotones();
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const btn = document.getElementById('toggleObsDetalle');
+    const content = document.getElementById('obsContentDetalle');
+    if (!btn || !content) return;
+    let abierto = false;
+    btn.addEventListener('click', ()=>{
+        abierto = !abierto;
+        if (abierto){
+            content.style.maxHeight = '180px';
+            btn.textContent = 'Ocultar';
+        } else {
+            content.style.maxHeight = '0';
+            btn.textContent = 'Ver';
+        }
+    });
+});
+</script>
+{% endblock %}

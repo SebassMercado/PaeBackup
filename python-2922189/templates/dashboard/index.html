@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Banner de Bienvenida con Imagen -->
+    <div class="welcome-banner">
+        <div class="banner-content">
+            <div class="welcome-text">
+                <div class="welcome-alert">
+                    <div class="alert-content">
+                        <h2>¡Bienvenido al Sistema PAE!</h2>
+                        <p>Hola <strong>{{ usuario.nombres }}</strong>, es un gusto tenerte aquí</p>
+                        <div class="user-role">
+                            <span class="role-badge role-{{ usuario.rol|lower }}">{{ usuario.get_rol_display_extended }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="welcome-image">
+                <img src="{% static 'img/perfil,png.jpg' %}" alt="Perfil PAE" style="width: 200px; height: 200px; object-fit: cover; border-radius: 50%; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); animation: slideInRight 0.8s ease-out;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Perfil del Usuario -->
+    <div class="user-profile-section">
+        <div class="profile-card">
+            <div class="profile-avatar">
+                <div class="perfil-placeholder">{{ usuario.nombres.0 }}{{ usuario.apellidos.0 }}</div>
+            </div>
+            <div class="profile-info">
+                <h3>{{ usuario.nombres }} {{ usuario.apellidos }}</h3>
+                <p class="profile-role">{{ usuario.get_rol_display_extended }}</p>
+                <p class="profile-email">{{ usuario.correo }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas según el rol -->
+    <div class="metrics-section">
+        <h3 class="section-title">
+            Resumen de Actividades
+        </h3>
+
+        {% if usuario_rol == 'A' %}
+        <!-- Métricas para Administrador -->
+        <div class="metrics-grid">
+            <div class="metric-card primary">
+                <div class="metric-content">
+                    <h4>{{ total_usuarios }}</h4>
+                    <p>Usuarios Activos</p>
+                </div>
+            </div>
+            <div class="metric-card success">
+                <div class="metric-content">
+                    <h4>{{ total_producciones }}</h4>
+                    <p>Total Producciones</p>
+                </div>
+            </div>
+            <div class="metric-card warning">
+                <div class="metric-content">
+                    <h4>{{ total_ventas }}</h4>
+                    <p>Total Ventas</p>
+                </div>
+            </div>
+            <div class="metric-card info">
+                <div class="metric-content">
+                    <h4>{{ total_recetas }}</h4>
+                    <p>Recetas Disponibles</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalles de Ventas -->
+        <div class="details-section">
+            <h4>Estado de Ventas</h4>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Pago Pendiente:</span>
+                    <span class="detail-value pending">{{ ventas_pago_pendiente }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Pago Completo:</span>
+                    <span class="detail-value completed">{{ ventas_pago_completo }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Procesando:</span>
+                    <span class="detail-value processing">{{ ventas_procesando }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Completadas:</span>
+                    <span class="detail-value success">{{ ventas_completadas }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalles de Producción -->
+        <div class="details-section">
+            <h4>Estado de Producción</h4>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Pendientes:</span>
+                    <span class="detail-value pending">{{ producciones_pendientes }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Aceptadas:</span>
+                    <span class="detail-value processing">{{ producciones_aceptadas }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Finalizadas:</span>
+                    <span class="detail-value success">{{ producciones_finalizadas }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado de Insumos -->
+        {% if insumos_activos is not None %}
+        <div class="details-section">
+            <h4>Estado de Insumos</h4>
+            <div class="details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Activos:</span>
+                    <span class="detail-value success">{{ insumos_activos }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Stock Bajo:</span>
+                    <span class="detail-value warning">{{ insumos_bajo_stock }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Inactivos:</span>
+                    <span class="detail-value danger">{{ insumos_inactivos }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% elif usuario_rol == 'EV' %}
+        <!-- Métricas para Empleado de Ventas -->
+        <div class="metrics-grid">
+            <div class="metric-card primary">
+                <div class="metric-content">
+                    <h4>{{ total_ventas_usuario }}</h4>
+                    <p>Mis Ventas</p>
+                </div>
+            </div>
+            <div class="metric-card success">
+                <div class="metric-content">
+                    <h4>{{ ventas_completadas_usuario }}</h4>
+                    <p>Completadas</p>
+                </div>
+            </div>
+            <div class="metric-card warning">
+                <div class="metric-content">
+                    <h4>{{ ventas_procesando_usuario }}</h4>
+                    <p>En Proceso</p>
+                </div>
+            </div>
+            <div class="metric-card danger">
+                <div class="metric-content">
+                    <h4>{{ ventas_pago_pendiente_usuario }}</h4>
+                    <p>Pago Pendiente</p>
+                </div>
+            </div>
+        </div>
+
+        {% elif usuario_rol == 'EP' %}
+        <!-- Métricas para Empleado de Producción -->
+        <div class="metrics-grid">
+            <div class="metric-card primary">
+                <div class="metric-content">
+                    <h4>{{ total_producciones_usuario }}</h4>
+                    <p>Mis Producciones</p>
+                </div>
+            </div>
+            <div class="metric-card success">
+                <div class="metric-content">
+                    <h4>{{ producciones_finalizadas_usuario }}</h4>
+                    <p>Finalizadas</p>
+                </div>
+            </div>
+            <div class="metric-card warning">
+                <div class="metric-content">
+                    <h4>{{ producciones_aceptadas_usuario }}</h4>
+                    <p>En Proceso</p>
+                </div>
+            </div>
+            <div class="metric-card info">
+                <div class="metric-content">
+                    <h4>{{ total_recetas }}</h4>
+                    <p>Recetas Disponibles</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="quick-actions">
+        <h3 class="section-title">
+            Acciones Rápidas
+        </h3>
+        <div class="actions-grid">
+            {% if usuario_rol == 'A' %}
+            <a href="{% url 'usuarios:index' %}" class="action-card">
+                <div class="action-icon">👥</div>
+                <span>Gestionar Usuarios</span>
+            </a>
+            {% endif %}
+            
+            {% if usuario_rol == 'EV' or usuario_rol == 'A' %}
+            <a href="{% url 'ventas:index' %}" class="action-card">
+                <div class="action-icon">💰</div>
+                <span>Nueva Venta</span>
+            </a>
+            {% endif %}
+            
+            {% if usuario_rol == 'EP' or usuario_rol == 'A' %}
+            <a href="{% url 'produccion:index' %}" class="action-card">
+                <div class="action-icon">🏭</div>
+                <span>Gestionar Producción</span>
+            </a>
+            {% endif %}
+            
+            <a href="{% url 'recetas:index' %}" class="action-card">
+                <div class="action-icon">📜</div>
+                <span>Ver Recetas</span>
+            </a>
+            <a href="{% url 'insumos:index' %}" class="action-card">
+                <div class="action-icon">📦</div>
+                <span>Inventario</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

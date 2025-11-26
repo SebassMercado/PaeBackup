@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Insumos - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/insumos.css' %}?v=3">
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="contenedor">
+        <div class="tabla">
+            <section class="card">
+                <!-- Header -->
+                <div class="encabezado">
+                    <h2><i class='bx bx-package'></i> Gestión de Insumos</h2>
+                    <div class="acciones-principales">
+                        <a href="{% url 'insumos:crear' %}" class="export-btn" title="Crear nuevo insumo">
+                            <i class='bx bx-plus'></i>
+                            Nuevo Insumo
+                        </a>
+                        <a href="{% url 'insumos:exportar_pdf' %}" class="export-btn" title="Descargar reporte PDF de insumos">
+                            <i class='bx bx-file-export'></i>
+                            Reporte PDF
+                        </a>
+                        <a href="{% url 'insumos:migrar_excel' %}" class="export-btn" title="Migrar insumos desde archivo Excel">
+                            <i class='bx bx-upload'></i>
+                            Migrar
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Estadísticas Mejoradas -->
+                <div class="estadisticas-modern">
+                    <div class="stats-container">
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern total">
+                                <i class='bx bx-package'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ total_insumos }}</h3>
+                                <p>Total Insumos</p>
+                                <div class="stat-trend">
+                                    <i class='bx bx-trending-up'></i>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern activos">
+                                <i class='bx bx-check-circle'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ insumos_activos }}</h3>
+                                <p>Insumos Activos</p>
+                                <div class="stat-trend positive">
+                                    <i class='bx bx-check-circle'></i>
+                                    <span>Activos</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern inactivos">
+                                <i class='bx bx-error-alt'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ insumos_bajo_stock }}</h3>
+                                <p>Stock Bajo</p>
+                                <div class="stat-trend negative">
+                                    <i class='bx bx-x-circle'></i>
+                                    <span>Alerta</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Insumos con Filtros -->
+                <div class="table-header">
+                    <h3><i class='bx bx-table'></i> Lista de Insumos</h3>
+                    <form method="get" id="formFiltroLote" style="display:flex; align-items:center; gap:15px;">
+                        <label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600;">
+                            <input type="checkbox" name="solo_lote" value="1" onchange="document.getElementById('formFiltroLote').submit();" {% if solo_lote %}checked{% endif %}>
+                            Mostrar solo productos con lote
+                        </label>
+                        {% if solo_lote %}
+                        <a href="?" class="btn btn-secondary" style="padding:6px 10px; font-size:0.75rem;">Quitar filtro</a>
+                        {% endif %}
+                    </form>
+                    <button type="button" class="btn-clear-filters" id="clear-filters">
+                        <i class='bx bx-filter-alt'></i>
+                        Limpiar Filtros
+                    </button>
+                </div>
+
+                <div class="wrapper" id="tablaInsumosWrapper">
+                    <table id="tablaInsumos">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            ID <span class="draggable" data-col="0"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="0">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Nombre <span class="draggable" data-col="1"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="1">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Categoría <span class="draggable" data-col="2"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="2">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Stock Actual <span class="draggable" data-col="3"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="3">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Unidad <span class="draggable" data-col="4"></span>
+                                        </div>
+                                        <select class="filter-input" data-column="4">
+                                            <option value="">Todas</option>
+                                            <option value="Kilogramo">Kilogramo</option>
+                                            <option value="Gramo">Gramo</option>
+                                            <option value="Litro">Litro</option>
+                                            <option value="Mililitro">Mililitro</option>
+                                            <option value="Unidad">Unidad</option>
+                                        </select>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Stock Mínimo <span class="draggable" data-col="5"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="5">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Estado <span class="draggable" data-col="6"></span>
+                                        </div>
+                                        <select class="filter-input" data-column="6">
+                                            <option value="">Todos</option>
+                                            <option value="Activo">Activo</option>
+                                            <option value="Stock insuficiente">Stock Bajo</option>
+                                            <option value="Insumo vencido">Vencido</option>
+                                            <option value="Inactivo">Inactivo</option>
+                                        </select>
+                                    </div>
+                                </th>
+                                <th style="width:150px">
+                                    <div class="column-title">
+                                        Opciones
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for insumo in insumos %}
+                            <tr data-insumo-id="{{ insumo.id_ins }}">
+                                <td><span class="cell-content">{{ insumo.id_ins }}</span></td>
+                                <td><span class="cell-content">{{ insumo.nombre }}</span></td>
+                                <td><span class="cell-content">{{ insumo.categoria }}</span></td>
+                                <td><span class="cell-content">{{ insumo.stock_actual }}</span></td>
+                                <td><span class="cell-content">{{ insumo.unidad_medida }}</span></td>
+                                <td><span class="cell-content">{{ insumo.stock_min }}</span></td>
+                                <td class="estado-cell">
+                                    <span class="cell-content estado-badge 
+                                        {% if insumo.estado == 'Activo' %}activo
+                                        {% elif insumo.estado == 'Insumo vencido' %}vencido
+                                        {% elif insumo.estado == 'Stock insuficiente' %}bajo-stock
+                                        {% else %}inactivo{% endif %}">
+                                        {{ insumo.estado }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="acciones">
+                                        <!-- Editar -->
+                                        <a href="{% url 'insumos:editar' insumo.id_ins %}" 
+                                           class="btn btn-outline-success" 
+                                           title="Editar insumo">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        
+                                        <!-- Ver Lotes -->
+                                        <a href="{% url 'insumos:detalle' insumo.id_ins %}" 
+                                           class="btn btn-outline-primary" 
+                                           title="Gestionar lotes">
+                                            <i class="bx bx-box"></i>
+                                        </a>
+                                        
+                                        <!-- Eliminar -->
+                                        <button class="btn btn-outline-danger eliminar-insumo" 
+                                                data-insumo-id="{{ insumo.id_ins }}"
+                                                data-insumo-nombre="{{ insumo.nombre }}"
+                                                title="Eliminar insumo">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="no-data">
+                                    <div class="empty-state">
+                                        <i class='bx bx-package'></i>
+                                        <h3>No hay insumos registrados</h3>
+                                        <p>Comienza agregando tu primer insumo</p>
+                                        <a href="{% url 'insumos:crear' %}" class="btn btn-primary">
+                                            <i class='bx bx-plus'></i>
+                                            Crear Insumo
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if insumos.has_other_pages %}
+                <div class="paginacion">
+                    <div class="pagination-info">
+                        Página {{ insumos.number }} de {{ insumos.paginator.num_pages }}
+                        ({{ insumos.paginator.count }} insumos en total)
+                    </div>
+                    <div class="pagination-controls">
+                        {% if insumos.has_previous %}
+                            <a href="?page=1" class="btn-pag">❮❮</a>
+                            <a href="?page={{ insumos.previous_page_number }}" class="btn-pag">❮</a>
+                        {% endif %}
+                        
+                        <span class="page-current">{{ insumos.number }}</span>
+                        
+                        {% if insumos.has_next %}
+                            <a href="?page={{ insumos.next_page_number }}" class="btn-pag">❯</a>
+                            <a href="?page={{ insumos.paginator.num_pages }}" class="btn-pag">❯❯</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Botón Volver -->
+                <div class="volver-section">
+                    <a href="{% url 'dashboard' %}" class="btn-back">
+                        <i class='bx bx-chevron-left'></i> 
+                        Volver
+                    </a>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+
+<!-- Modal de Confirmación -->
+<div id="modalConfirmacion" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Confirmar Acción</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="mensajeConfirmacion"></p>
+            <input type="text" id="inputConfirmacion" placeholder="Escriba ELIMINAR para confirmar" style="display: none;">
+        </div>
+        <div class="modal-footer">
+            <button id="btnCancelar" class="btn btn-secondary">Cancelar</button>
+            <button id="btnConfirmar" class="btn btn-danger">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript para funcionalidades AJAX y modales
+document.addEventListener('DOMContentLoaded', function() {
+    // CSRF Token para AJAX
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Elementos del modal
+    const modal = document.getElementById('modalConfirmacion');
+    const modalClose = document.querySelector('.modal-close');
+    const btnCancelar = document.getElementById('btnCancelar');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    const mensajeConfirmacion = document.getElementById('mensajeConfirmacion');
+    const inputConfirmacion = document.getElementById('inputConfirmacion');
+    
+    let accionPendiente = null;
+    
+    // Funciones del modal
+    function abrirModal(mensaje, requireConfirmation = false) {
+        mensajeConfirmacion.textContent = mensaje;
+        if (requireConfirmation) {
+            inputConfirmacion.style.display = 'block';
+            inputConfirmacion.value = '';
+        } else {
+            inputConfirmacion.style.display = 'none';
+        }
+        modal.style.display = 'flex';
+    }
+    
+    function cerrarModal() {
+        modal.style.display = 'none';
+        accionPendiente = null;
+        inputConfirmacion.value = '';
+    }
+    
+    // Event listeners del modal
+    modalClose.addEventListener('click', cerrarModal);
+    btnCancelar.addEventListener('click', cerrarModal);
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) cerrarModal();
+    });
+    
+    // Eliminar insumo
+    document.querySelectorAll('.eliminar-insumo').forEach(button => {
+        button.addEventListener('click', function() {
+            const insumoId = this.getAttribute('data-insumo-id');
+            const insumoNombre = this.getAttribute('data-insumo-nombre');
+            const row = this.closest('tr');
+            
+            accionPendiente = {
+                tipo: 'eliminar',
+                insumoId: insumoId,
+                insumoNombre: insumoNombre,
+                url: `/insumos/eliminar/${insumoId}/`,
+                row: row
+            };
+            
+            abrirModal(`Para confirmar la eliminación del insumo "${insumoNombre}", escriba ELIMINAR:`, true);
+        });
+    });
+    
+    // Confirmar acción
+    btnConfirmar.addEventListener('click', function() {
+        if (!accionPendiente) return;
+        
+        // Validar confirmación para eliminación
+        if (accionPendiente.tipo === 'eliminar') {
+            const confirmacion = inputConfirmacion.value.trim().toUpperCase();
+            if (confirmacion !== 'ELIMINAR') {
+                alert('Debe escribir ELIMINAR para confirmar');
+                return;
+            }
+        }
+        
+        // Ejecutar acción AJAX
+        fetch(accionPendiente.url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensaje de éxito
+                mostrarMensaje(data.message, 'success');
+                
+                if (accionPendiente.tipo === 'eliminar') {
+                    // Eliminar fila de la tabla
+                    accionPendiente.row.remove();
+                    actualizarEstadisticas(-1);
+                }
+            } else {
+                mostrarMensaje(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            mostrarMensaje('Error de conexión', 'error');
+        })
+        .finally(() => {
+            cerrarModal();
+        });
+    });
+    
+    // Función para mostrar mensajes
+    function mostrarMensaje(mensaje, tipo) {
+        const msgElement = document.createElement('div');
+        msgElement.className = `alert alert-${tipo}`;
+        msgElement.textContent = mensaje;
+        msgElement.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            background: ${tipo === 'success' ? '#28a745' : '#dc3545'};
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        `;
+        
+        document.body.appendChild(msgElement);
+        
+        setTimeout(() => {
+            msgElement.remove();
+        }, 3000);
+    }
+    
+    // Función para actualizar estadísticas
+    function actualizarEstadisticas(cambioTotal) {
+        const totalElement = document.querySelector('.stat-card-modern:nth-child(1) h3');
+        if (totalElement && cambioTotal !== 0) {
+            const nuevoTotal = parseInt(totalElement.textContent) + cambioTotal;
+            totalElement.textContent = nuevoTotal;
+        }
+    }
+    
+    // Sistema de filtros de columnas
+    const filterInputs = document.querySelectorAll('.filter-input');
+    const tableRows = document.querySelectorAll('#tablaInsumos tbody tr');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            aplicarFiltros();
+        });
+        
+        input.addEventListener('change', function() {
+            aplicarFiltros();
+        });
+    });
+    
+    function aplicarFiltros() {
+        tableRows.forEach(row => {
+            if (row.querySelector('.empty-state')) return;
+            
+            let mostrar = true;
+            
+            filterInputs.forEach(input => {
+                const columnIndex = parseInt(input.getAttribute('data-column'));
+                const filterValue = input.value.toLowerCase().trim();
+                
+                if (filterValue) {
+                    const cellValue = row.children[columnIndex].textContent.toLowerCase().trim();
+                    if (!cellValue.includes(filterValue)) {
+                        mostrar = false;
+                    }
+                }
+            });
+            
+            row.style.display = mostrar ? '' : 'none';
+        });
+        
+        actualizarContadorResultados();
+    }
+    
+    // Función para actualizar contador de resultados
+    function actualizarContadorResultados() {
+        const visibleRows = document.querySelectorAll('#tablaInsumos tbody tr:not([style*="display: none"])');
+        const emptyStateRow = document.querySelector('#tablaInsumos tbody tr .empty-state');
+        const visibleCount = emptyStateRow ? 0 : visibleRows.length;
+        
+        const paginationInfo = document.querySelector('.pagination-info');
+        if (paginationInfo && !emptyStateRow) {
+            if (visibleCount === 0) {
+                paginationInfo.textContent = 'No se encontraron resultados';
+            } else {
+                paginationInfo.textContent = `Mostrando ${visibleCount} resultado(s) filtrado(s)`;
+            }
+        }
+    }
+    
+    // Función para limpiar todos los filtros
+    function limpiarFiltros() {
+        filterInputs.forEach(input => {
+            input.value = '';
+        });
+        
+        tableRows.forEach(row => {
+            row.style.display = '';
+        });
+        
+        actualizarContadorResultados();
+    }
+    
+    // Botón limpiar filtros
+    const btnClearFilters = document.getElementById('clear-filters');
+    if (btnClearFilters) {
+        btnClearFilters.addEventListener('click', limpiarFiltros);
+    }
+});
+
+// Función para confirmar corrección de lotes vencidos
+function confirmarCorreccionVencidos() {
+    const confirmacion = confirm(
+        '¿Está seguro de que desea corregir todos los lotes vencidos del sistema?\n\n' +
+        'Esta acción:\n' +
+        '• Cambiará el estado de lotes con fechas vencidas a "Vencido"\n' +
+        '• Ajustará automáticamente el stock de los insumos afectados\n' +
+        '• No se puede deshacer\n\n' +
+        'Se recomienda hacer esta corrección periódicamente.'
+    );
+    
+    if (confirmacion) {
+        // Crear y enviar formulario
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "insumos:corregir_vencidos" %}';
+        
+        // Agregar token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+
+{% csrf_token %}
+{% endblock %}

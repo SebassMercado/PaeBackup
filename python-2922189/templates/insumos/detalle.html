@@ -1,0 +1,860 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Insumo - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/insumos.css' %}?v=3">
+<style>
+/* Botón retorno mejorado */
+.btn-back-receta {
+    background: linear-gradient(135deg,#2563eb,#1d4ed8 45%,#1e3a8a);
+    color:#fff !important;
+    border:none;
+    position:relative;
+    transition:background .3s ease, transform .25s ease, box-shadow .25s ease;
+    box-shadow:0 4px 12px rgba(0,0,0,.25);
+    -webkit-tap-highlight-color:transparent;
+    outline:none;
+    background-size: 180% 180%;
+    background-position: 0% 50%;
+    will-change: transform, box-shadow, background-position;
+}
+.btn-back-receta i {transition:transform .25s ease;}
+.btn-back-receta:hover {
+    transform:translateY(-3px);
+    box-shadow:0 8px 18px rgba(0,0,0,.35);
+    background: linear-gradient(135deg,#2d6df0,#2158dc 45%,#1e3a8a);
+    background-position: 100% 50%;
+    color:#fff !important;
+}
+.btn-back-receta:hover i {transform:translateX(-4px);}
+.btn-back-receta:focus,
+.btn-back-receta:active {
+    background: linear-gradient(135deg,#1d4ed8,#1e3a8a 50%,#172554) !important;
+    color:#fff !important;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+    transform:translateY(-1px);
+}
+.btn-back-receta:focus-visible {outline:2px solid #93c5fd; outline-offset:2px;}
+
+/* Segundo botón (Insumos) variante suave */
+.btn-back-secondary {
+    background:#f1f5f9;
+    color:#334155 !important;
+    border:1px solid #cbd5e1;
+    transition:all .3s ease;
+}
+.btn-back-secondary:hover {background:#e2e8f0; color:#0f172a !important;}
+
+/* ================= Modal Historial Mejorado ================ */
+#modalHistorial .modal-content.modal-historial {
+    max-width: 1000px !important;
+    width: 100%;
+    background: linear-gradient(135deg,#ffffff 0%,#f8fafc 55%,#f1f5f9 100%);
+    border:1px solid #e2e8f0;
+    box-shadow:0 8px 32px rgba(0,0,0,.15);
+    backdrop-filter: blur(4px);
+}
+#modalHistorial .modal-header {
+    background: linear-gradient(90deg,#dc2626,#b91c1c);
+    color:#fff;
+    padding:14px 20px;
+    border-radius:8px 8px 0 0;
+    box-shadow:0 2px 6px rgba(0,0,0,.25);
+}
+#modalHistorial h3 {margin:0; font-weight:600; letter-spacing:.5px;}
+#modalHistorial table {width:100%; border-collapse:separate; border-spacing:0; font-size:13px;}
+#modalHistorial thead th {
+    position:sticky; top:0;
+    background:#7f1d1d; color:#f8fafc;
+    font-weight:600; padding:10px 8px; font-size:12px;
+    text-transform:uppercase; letter-spacing:.5px;
+}
+#modalHistorial tbody tr:nth-child(even){background:#f1f5f9;}
+#modalHistorial tbody tr:hover {background:#ffe4e6; transition:.2s;}
+#modalHistorial td {padding:8px 10px; border-bottom:1px solid #e2e8f0;}
+#modalHistorial .estado-badge {display:inline-block; padding:4px 10px; border-radius:14px; font-size:11px; font-weight:600;}
+#modalHistorial .estado-badge.activo {background:#dcfce7; color:#166534;}
+#modalHistorial .estado-badge.vencido {background:#fee2e2; color:#b91c1c;}
+#modalHistorial .estado-badge.inactivo {background:#e2e8f0; color:#475569;}
+#modalHistorial .operacion-delta {font-weight:600; font-family:monospace;}
+#modalHistorial .operacion-delta.entrada {color:#166534;}
+#modalHistorial .operacion-delta.salida {color:#b91c1c;}
+#modalHistorial .operacion-delta.edicion {color:#475569;}
+#modalHistorial .modal-footer {background:#f1f5f9; border-top:1px solid #e2e8f0;}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="contenedor">
+        <div class="tabla">
+            <section class="card">
+                <!-- Header -->
+                <div class="encabezado">
+                    <h2><i class='bx bx-box'></i> Gestión de Lotes - {{ insumo.nombre }}</h2>
+                    <div class="acciones-principales">
+                        <button type="button" class="export-btn" onclick="abrirModal('modalAgregarLote')">
+                            <i class='bx bx-plus'></i>
+                            {% if insumo.requiere_lote %}Agregar Lote{% else %}Agregar Entrada{% endif %}
+                        </button>
+                        <button type="button" class="export-btn" onclick="abrirModal('modalHistorial')">
+                            <i class='bx bx-history'></i>
+                            Ver Historial
+                        </button>
+                        <a href="{% url 'insumos:exportar_lotes_pdf' insumo.id_ins %}" class="export-btn">
+                            <i class='bx bx-file-export'></i>
+                            Reporte PDF
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Información del Insumo -->
+                <div class="estadisticas-modern">
+                    <div class="stats-container">
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern total">
+                                <i class='bx bx-package'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ insumo.stock_actual }}</h3>
+                                <p>Stock Total</p>
+                                <div class="stat-trend">
+                                    <i class='bx bx-trending-up'></i>
+                                    <span>{{ insumo.unidad_medida }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern activos">
+                                <i class='bx bx-check-circle'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ lotes_activos|length }}</h3>
+                                <p>Lotes Activos</p>
+                                <div class="stat-trend positive">
+                                    <i class='bx bx-check-circle'></i>
+                                    <span>Disponibles</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern inactivos">
+                                <i class='bx bx-error-alt'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ lotes_vencidos|length }}</h3>
+                                <p>Lotes Vencidos</p>
+                                <div class="stat-trend negative">
+                                    <i class='bx bx-x-circle'></i>
+                                    <span>Vencidos</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Lotes -->
+                <div class="table-header">
+                    <h3><i class='bx bx-table'></i> Lista de Lotes</h3>
+                    <button type="button" class="btn-clear-filters" id="clear-filters">
+                        <i class='bx bx-filter-alt'></i>
+                        Limpiar Filtros
+                    </button>
+                </div>
+
+                <div class="wrapper" id="tablaLotesWrapper">
+                    <table id="tablaLotes">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            ID <span class="draggable" data-col="0"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="0">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Insumo <span class="draggable" data-col="1"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="1">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Cantidad <span class="draggable" data-col="2"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="2">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Fecha Ingreso <span class="draggable" data-col="3"></span>
+                                        </div>
+                                        <input type="date" class="filter-input" data-column="3">
+                                    </div>
+                                </th>
+                                {% if insumo.requiere_lote %}
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Fecha Vencimiento <span class="draggable" data-col="4"></span>
+                                        </div>
+                                        <input type="date" class="filter-input" data-column="4">
+                                    </div>
+                                </th>
+                                {% endif %}
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Estado <span class="draggable" data-col="5"></span>
+                                        </div>
+                                        <select class="filter-input" data-column="5">
+                                            <option value="">Todos</option>
+                                            <option value="Activo">Activo</option>
+                                            <option value="Vencido">Vencido</option>
+                                            <option value="Agotado">Agotado</option>
+                                        </select>
+                                    </div>
+                                </th>
+                                <th style="width:150px">
+                                    <div class="column-title">
+                                        Opciones
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lote in lotes %}
+                            <tr data-lote-id="{{ lote.id_detalle }}">
+                                <td><span class="cell-content">{{ lote.id_detalle }}</span></td>
+                                <td><span class="cell-content">{{ insumo.nombre }}</span></td>
+                                <td><span class="cell-content">{{ lote.cantidad }}</span></td>
+                                <td><span class="cell-content">{{ lote.fecha_ingreso|date:"d/m/Y H:i" }}</span></td>
+                                {% if insumo.requiere_lote %}
+                                <td><span class="cell-content">{{ lote.fecha_vencimiento|date:"d/m/Y"|default:"N/A" }}</span></td>
+                                {% endif %}
+                                <td class="estado-cell">
+                                    <span class="cell-content estado-badge 
+                                        {% if lote.estado == 'Activo' %}activo
+                                        {% elif lote.estado == 'Vencido' %}vencido
+                                        {% else %}inactivo{% endif %}">
+                                        {{ lote.estado }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="acciones">
+                                        <!-- Editar -->
+                                        <button type="button" class="btn btn-outline-success editar-lote" 
+                                                data-lote-id="{{ lote.id_detalle }}"
+                                                data-lote-cantidad="{{ lote.cantidad|floatformat:2 }}"
+                                                data-lote-fecha="{% if lote.fecha_vencimiento %}{{ lote.fecha_vencimiento|date:'Y-m-d' }}{% endif %}"
+                                                data-lote-estado="{{ lote.estado }}"
+                                                title="Editar lote - ID: {{ lote.id_detalle }} - Cantidad: {{ lote.cantidad }}">
+                                            <i class="bx bx-edit"></i>
+                                        </button>
+                                        
+                                        <!-- Eliminar -->
+                                        <button class="btn btn-outline-danger eliminar-lote" 
+                                                data-lote-id="{{ lote.id_detalle }}"
+                                                data-lote-cantidad="{{ lote.cantidad }}"
+                                                title="Eliminar lote">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{% if insumo.requiere_lote %}7{% else %}6{% endif %}" class="no-data">
+                                    <div class="empty-state">
+                                        <i class='bx bx-box'></i>
+                                        <h3>No hay lotes registrados</h3>
+                                        <p>Comienza agregando el primer lote</p>
+                                        <button onclick="abrirModal('modalAgregarLote')" class="btn btn-primary">
+                                            <i class='bx bx-plus'></i>
+                                            Agregar Lote
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if lotes.has_other_pages %}
+                <div class="paginacion">
+                    <div class="pagination-info">
+                        Página {{ lotes.number }} de {{ lotes.paginator.num_pages }}
+                        ({{ lotes.paginator.count }} lotes en total)
+                    </div>
+                    <div class="pagination-controls">
+                        {% if lotes.has_previous %}
+                            <a href="?page=1" class="btn-pag">❮❮</a>
+                            <a href="?page={{ lotes.previous_page_number }}" class="btn-pag">❮</a>
+                        {% endif %}
+                        
+                        <span class="page-current">{{ lotes.number }}</span>
+                        
+                        {% if lotes.has_next %}
+                            <a href="?page={{ lotes.next_page_number }}" class="btn-pag">❯</a>
+                            <a href="?page={{ lotes.paginator.num_pages }}" class="btn-pag">❯❯</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Botón Volver -->
+                <div class="volver-section">
+                    {% if request.GET.from == 'receta' and request.GET.id_rec %}
+                        <a href="/recetas/{{ request.GET.id_rec }}/ingredientes/" class="btn-back btn-back-receta">
+                            <i class='bx bx-chevrons-left'></i>
+                            <span style="font-weight:600;">Regresar a Ingredientes</span>
+                        </a>
+                        <a href="{% url 'insumos:index' %}" class="btn-back btn-back-secondary" style="margin-left:10px;">
+                            <i class='bx bx-list-ul'></i>
+                            Lista Insumos
+                        </a>
+                    {% else %}
+                        <a href="{% url 'insumos:index' %}" class="btn-back">
+                            <i class='bx bx-chevron-left'></i> 
+                            Volver a Insumos
+                        </a>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+
+<!-- Modal Agregar Lote -->
+<div id="modalAgregarLote" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Agregar Nuevo Lote</h3>
+            <button class="modal-close" onclick="cerrarModal('modalAgregarLote')">&times;</button>
+        </div>
+        <form method="post" action="{% url 'insumos:agregar_lote' insumo.id_ins %}">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="fila">
+                    <div class="campo">
+                        <label for="cantidad">
+                            <i class='bx bx-package'></i>
+                            Cantidad *
+                        </label>
+                        <input type="number" id="cantidad" name="cantidad" class="input" 
+                               step="0.01" min="0.01" required 
+                               placeholder="Ej: 100.5">
+                        <span class="help-text">Cantidad en {{ insumo.unidad_medida }}</span>
+                    </div>
+                </div>
+                
+                {% if insumo.requiere_lote %}
+                <div class="fila">
+                    <div class="campo">
+                        <label for="fecha_vencimiento">
+                            <i class='bx bx-calendar'></i>
+                            Fecha de Vencimiento *
+                        </label>
+                        <input type="date" id="fecha_vencimiento" name="fecha_vencimiento" class="input" required>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="fila">
+                    <div class="campo">
+                        <label for="estado">
+                            <i class='bx bx-check-circle'></i>
+                            Estado *
+                        </label>
+                        <select id="estado" name="estado" class="input" required>
+                            <option value="Activo">Activo</option>
+                            {% if insumo.requiere_lote %}<option value="Vencido">Vencido</option>{% endif %}
+                            <option value="Agotado">Agotado</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" onclick="cerrarModal('modalAgregarLote')" class="btn btn-secondary">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    <i class='bx bx-plus'></i>
+                    Agregar Lote
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Editar Lote -->
+<div id="modalEditarLote" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Editar Lote</h3>
+            <button class="modal-close" onclick="cerrarModal('modalEditarLote')">&times;</button>
+        </div>
+        <form method="post" action="{% url 'insumos:editar_lote' insumo.id_ins %}" onsubmit="console.log('🔵 DEBUG: Formulario enviándose...'); return debugFormSubmit(this);">
+            {% csrf_token %}
+            <input type="hidden" id="edit_lote_id" name="lote_id">
+            <div class="modal-body">
+                <div class="fila">
+                    <div class="campo">
+                        <label for="edit_cantidad">
+                            <i class='bx bx-package'></i>
+                            Cantidad
+                        </label>
+                        <input type="text" id="edit_cantidad_display" class="input" 
+                               readonly style="background-color: #f5f5f5; cursor: not-allowed;">
+                        <input type="hidden" id="edit_cantidad" name="cantidad">
+                        <span class="help-text">La cantidad no se puede modificar - {{ insumo.unidad_medida }}</span>
+                    </div>
+                </div>
+                
+                {% if insumo.requiere_lote %}
+                <div class="fila">
+                    <div class="campo">
+                        <label for="edit_fecha_vencimiento">
+                            <i class='bx bx-calendar'></i>
+                            Fecha de Vencimiento *
+                        </label>
+                        <input type="date" id="edit_fecha_vencimiento" name="fecha_vencimiento" class="input" required>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="fila">
+                    <div class="campo">
+                        <label for="edit_estado">
+                            <i class='bx bx-check-circle'></i>
+                            Estado *
+                        </label>
+                        <select id="edit_estado" name="estado" class="input" required>
+                            <option value="Activo">Activo</option>
+                            {% if insumo.requiere_lote %}<option value="Vencido">Vencido</option>{% endif %}
+                            <option value="Agotado">Agotado</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="fila">
+                    <div class="campo">
+                        <label for="motivo_edicion">
+                            <i class='bx bx-note'></i>
+                            Motivo de la Edición *
+                        </label>
+                        <textarea id="motivo_edicion" name="motivo_edicion" class="textarea" 
+                                  rows="3" required placeholder="Describe el motivo de la modificación..."></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" onclick="cerrarModal('modalEditarLote')" class="btn btn-secondary">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    <i class='bx bx-save'></i>
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Eliminar Lote -->
+<div id="modalEliminarLote" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Eliminar Lote</h3>
+            <button class="modal-close" onclick="cerrarModal('modalEliminarLote')">&times;</button>
+        </div>
+        <form method="post" action="{% url 'insumos:eliminar_lote' insumo.id_ins %}">
+            {% csrf_token %}
+            <input type="hidden" id="delete_lote_id" name="lote_id">
+            <div class="modal-body">
+                <p id="mensajeEliminar">¿Está seguro de eliminar este lote?</p>
+                
+                <div class="fila">
+                    <div class="campo">
+                        <label for="motivo_eliminacion">
+                            <i class='bx bx-note'></i>
+                            Motivo de Eliminación *
+                        </label>
+                        <textarea id="motivo_eliminacion" name="motivo_eliminacion" class="textarea" 
+                                  rows="3" required placeholder="Describe el motivo de la eliminación..."></textarea>
+                        <span class="help-text">Este registro quedará en el historial</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" onclick="cerrarModal('modalEliminarLote')" class="btn btn-secondary">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-danger">
+                    <i class='bx bx-trash'></i>
+                    Eliminar Lote
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Historial -->
+<div id="modalHistorial" class="modal-overlay">
+    <div class="modal-content modal-historial">
+        <div class="modal-header">
+            <h3>Historial de Movimientos</h3>
+            <button class="modal-close" onclick="cerrarModal('modalHistorial')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="wrapper" style="max-height: 400px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Acción</th>
+                            <th>Lote</th>
+                            <th>Antes</th>
+                            <th>Operación</th>
+                            <th>Después</th>
+                            <th>Novedad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in historiales_enriquecidos %}
+                        <tr>
+                            <td>{{ h.fecha|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <span class="estado-badge 
+                                    {% if h.accion == 'Entrada' %}activo
+                                    {% elif h.accion == 'Salida' or h.accion == 'Vencimiento' %}vencido
+                                    {% else %}inactivo{% endif %}">
+                                    {{ h.accion }}
+                                </span>
+                            </td>
+                            <td>{{ h.lote_id|default:"N/A" }}</td>
+                            <td>{% if h.stock_antes is not None %}{{ h.stock_antes }}{% else %}—{% endif %}</td>
+                            <td>
+                                {% if h.delta_signo %}
+                                    <span class="operacion-delta 
+                                        {% if h.delta_signo == '+' %}entrada{% elif h.delta_signo == '-' %}salida{% else %}edicion{% endif %}">
+                                        {{ h.delta_signo }}{{ h.delta_valor }}
+                                    </span>
+                                {% else %}—{% endif %}
+                            </td>
+                            <td>{{ h.stock_despues }}</td>
+                            <td>{{ h.novedad|truncatechars:50 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align:center;">
+                                No hay movimientos registrados
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" onclick="cerrarModal('modalHistorial')" class="btn btn-secondary">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Funciones de modal
+    window.abrirModal = function(modalId) {
+        console.log('🔓 DEBUG: Intentando abrir modal:', modalId);
+        
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            console.log('🔓 DEBUG: Modal encontrado, abriendo...');
+            modal.style.display = 'flex';
+            console.log('🔓 DEBUG: Modal abierto, display:', modal.style.display);
+            
+            // Si es el modal de edición, activar verificación de estado por fecha
+            if (modalId === 'modalEditarLote') {
+                console.log('🔓 DEBUG: Es modal de edición, configurando verificación...');
+                setTimeout(() => {
+                    verificarEstadoPorFecha();
+                    console.log('🔓 DEBUG: Verificación de estado configurada');
+                }, 100);
+            }
+        } else {
+            console.error('❌ DEBUG: Modal no encontrado:', modalId);
+        }
+    };
+    
+    window.cerrarModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        // Limpiar formularios
+        const modal = document.getElementById(modalId);
+        const forms = modal.querySelectorAll('form');
+        forms.forEach(form => form.reset());
+    };
+    
+    // Cerrar modal al hacer clic fuera
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                cerrarModal(modal.id);
+            }
+        });
+    });
+    
+    // Los cálculos de precio se quitaron ya que no se manejan precios por lote
+    
+    // Manejar edición de lotes
+    document.querySelectorAll('.editar-lote').forEach(button => {
+        console.log('🔵 DEBUG: Botón editar encontrado:', button);
+        
+        button.addEventListener('click', function() {
+            console.log('🔵 DEBUG: Click en botón editar');
+            
+            const loteId = this.getAttribute('data-lote-id');
+            const cantidad = this.getAttribute('data-lote-cantidad');
+            const fecha = this.getAttribute('data-lote-fecha');
+            const estado = this.getAttribute('data-lote-estado');
+            
+            console.log('🔵 DEBUG: Datos extraídos del botón:', {
+                loteId: loteId,
+                cantidad: cantidad,
+                fecha: fecha,
+                estado: estado
+            });
+            
+            // Llenar formulario y abrir modal
+            llenarFormularioEdicion(loteId, cantidad, fecha, estado);
+            abrirModal('modalEditarLote');
+        });
+    });
+    
+    // Función auxiliar para llenar el formulario de edición
+    function llenarFormularioEdicion(loteId, cantidad, fecha, estado) {
+        console.log('🔧 DEBUG: Iniciando llenado de formulario con:', { loteId, cantidad, fecha, estado });
+        
+        // Verificar que existen los campos
+        const campos = {
+            edit_lote_id: document.getElementById('edit_lote_id'),
+            edit_cantidad: document.getElementById('edit_cantidad'),
+            edit_cantidad_display: document.getElementById('edit_cantidad_display'),
+            edit_fecha_vencimiento: document.getElementById('edit_fecha_vencimiento'),
+            edit_estado: document.getElementById('edit_estado'),
+            motivo_edicion: document.getElementById('motivo_edicion')
+        };
+        
+        console.log('🔧 DEBUG: Campos encontrados:', {
+            edit_lote_id: !!campos.edit_lote_id,
+            edit_cantidad: !!campos.edit_cantidad,
+            edit_cantidad_display: !!campos.edit_cantidad_display,
+            edit_fecha_vencimiento: !!campos.edit_fecha_vencimiento,
+            edit_estado: !!campos.edit_estado,
+            motivo_edicion: !!campos.motivo_edicion
+        });
+        
+        // Llenar campos directamente
+        if (campos.edit_lote_id) {
+            campos.edit_lote_id.value = loteId || '';
+            console.log('🔧 DEBUG: Lote ID asignado:', campos.edit_lote_id.value);
+        }
+        
+        if (campos.edit_cantidad) {
+            campos.edit_cantidad.value = cantidad || '';
+            console.log('🔧 DEBUG: Cantidad hidden asignada:', campos.edit_cantidad.value);
+        }
+        
+        if (campos.edit_cantidad_display) {
+            campos.edit_cantidad_display.value = `${cantidad || ''} {{ insumo.unidad_medida }}`;
+            console.log('🔧 DEBUG: Cantidad display asignada:', campos.edit_cantidad_display.value);
+        }
+        
+        if (campos.edit_fecha_vencimiento) {
+            campos.edit_fecha_vencimiento.value = fecha || '';
+            console.log('🔧 DEBUG: Fecha asignada:', campos.edit_fecha_vencimiento.value);
+        }
+        
+        if (campos.edit_estado) {
+            campos.edit_estado.value = estado || 'Activo';
+            console.log('🔧 DEBUG: Estado asignado:', campos.edit_estado.value);
+        }
+        
+        if (campos.motivo_edicion) {
+            campos.motivo_edicion.value = '';
+            console.log('🔧 DEBUG: Motivo limpiado');
+        }
+        
+        console.log('✅ DEBUG: Formulario llenado completamente');
+    }
+    
+    // Función para verificar y actualizar estado automáticamente basado en fecha
+    function verificarEstadoPorFecha() {
+        const requiereLote = {{ insumo.requiere_lote|yesno:'true,false' }};
+        if (!requiereLote) return; // No manejar fechas si la categoría no requiere lote
+        const fechaField = document.getElementById('edit_fecha_vencimiento');
+        const estadoField = document.getElementById('edit_estado');
+        if (!fechaField || !estadoField) return;
+        fechaField.addEventListener('change', function() {
+            if (!this.value) return;
+            const fechaVencimiento = new Date(this.value);
+            const fechaHoy = new Date();
+            fechaHoy.setHours(0, 0, 0, 0);
+            if (fechaVencimiento < fechaHoy) {
+                estadoField.value = 'Vencido';
+                mostrarAlertaEstado('⚠️ Estado cambiado automáticamente a "Vencido" porque la fecha ya pasó', 'warning');
+            } else if (estadoField.value === 'Vencido') {
+                estadoField.value = 'Activo';
+                mostrarAlertaEstado('✅ Estado cambiado automáticamente a "Activo" porque la fecha es futura', 'success');
+            }
+        });
+    }
+    
+    // Función para mostrar alertas de estado
+    function mostrarAlertaEstado(mensaje, tipo) {
+        // Crear elemento de alerta
+        const alerta = document.createElement('div');
+        alerta.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 5px;
+            color: white;
+            z-index: 10000;
+            font-size: 14px;
+            max-width: 300px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        `;
+        
+        if (tipo === 'warning') {
+            alerta.style.backgroundColor = '#f39c12';
+        } else if (tipo === 'success') {
+            alerta.style.backgroundColor = '#27ae60';
+        }
+        
+        alerta.textContent = mensaje;
+        document.body.appendChild(alerta);
+        
+        // Remover después de 3 segundos
+        setTimeout(() => {
+            if (alerta.parentNode) {
+                alerta.parentNode.removeChild(alerta);
+            }
+        }, 3000);
+    }
+    
+    // Función de debug para envío de formulario
+    window.debugFormSubmit = function(form) {
+        console.log('🔵 DEBUG: Datos del formulario antes de envío:');
+        const formData = new FormData(form);
+        for (let [key, value] of formData.entries()) {
+            console.log(`  ${key}: "${value}"`);
+        }
+        
+        console.log('🔵 DEBUG: URL de acción:', form.action);
+        console.log('🔵 DEBUG: Método:', form.method);
+        
+        // Verificar campos específicos
+        const campos = {
+            lote_id: document.getElementById('edit_lote_id')?.value,
+            cantidad: document.getElementById('edit_cantidad')?.value,
+            fecha_vencimiento: document.getElementById('edit_fecha_vencimiento')?.value,
+            estado: document.getElementById('edit_estado')?.value,
+            motivo_edicion: document.getElementById('motivo_edicion')?.value
+        };
+        
+        console.log('🔵 DEBUG: Valores de campos:', campos);
+        
+        // Verificar si hay campos vacíos críticos
+        if (!campos.lote_id) {
+            console.error('❌ DEBUG: lote_id está vacío!');
+            alert('Error: ID de lote no encontrado');
+            return false;
+        }
+        
+        if (!campos.motivo_edicion) {
+            console.warn('⚠️ DEBUG: motivo_edicion está vacío');
+        }
+        
+        console.log('✅ DEBUG: Formulario válido, enviando...');
+        return true;
+    };
+    
+    // Manejar eliminación de lotes
+    document.querySelectorAll('.eliminar-lote').forEach(button => {
+        button.addEventListener('click', function() {
+            const loteId = this.getAttribute('data-lote-id');
+            const cantidad = this.getAttribute('data-lote-cantidad');
+            
+            document.getElementById('delete_lote_id').value = loteId;
+            document.getElementById('mensajeEliminar').textContent = 
+                `¿Está seguro de eliminar el lote #${loteId} con cantidad ${cantidad}?`;
+            
+            abrirModal('modalEliminarLote');
+        });
+    });
+    
+    // Sistema de filtros
+    const filterInputs = document.querySelectorAll('.filter-input');
+    const tableRows = document.querySelectorAll('#tablaLotes tbody tr');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('input', aplicarFiltros);
+        input.addEventListener('change', aplicarFiltros);
+    });
+    
+    function aplicarFiltros() {
+        tableRows.forEach(row => {
+            if (row.querySelector('.empty-state')) return;
+            
+            let mostrar = true;
+            
+            filterInputs.forEach(input => {
+                const columnIndex = parseInt(input.getAttribute('data-column'));
+                const filterValue = input.value.toLowerCase().trim();
+                
+                if (filterValue) {
+                    const cellValue = row.children[columnIndex].textContent.toLowerCase().trim();
+                    if (!cellValue.includes(filterValue)) {
+                        mostrar = false;
+                    }
+                }
+            });
+            
+            row.style.display = mostrar ? '' : 'none';
+        });
+    }
+    
+    // Botón limpiar filtros
+    document.getElementById('clear-filters').addEventListener('click', function() {
+        filterInputs.forEach(input => {
+            input.value = '';
+        });
+        
+        tableRows.forEach(row => {
+            row.style.display = '';
+        });
+    });
+});
+</script>
+
+{% csrf_token %}
+{% endblock %}

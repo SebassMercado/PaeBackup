@@ -1,0 +1,828 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Recetas - Sistema PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+<style>
+    /* Estilos específicos para recetas manteniendo el diseño consistente */
+    .recetas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 25px;
+        margin: 30px 20px;
+        padding: 20px;
+    }
+    
+    /* Filtros por columnas */
+    .filtros-columnas {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border: 1px solid #e9ecef;
+    }
+    
+    .filtros-grid-columnas {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+    }
+    
+    .filtro-columna {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .column-header {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .column-title {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.9em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .column-title i {
+        color: #3498db;
+        font-size: 1em;
+    }
+    
+    .filter-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.9em;
+        transition: border-color 0.3s ease;
+    }
+    
+    .filter-input:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+    }
+    
+    .filter-input::placeholder {
+        color: #95a5a6;
+        font-style: italic;
+    }
+    
+    /* Ocultar recetas que no coinciden con filtros */
+    .receta-card.hidden {
+        display: none !important;
+    }
+    
+    /* Indicador de filtros activos */
+    .filtros-activos {
+        background: #e8f5e8;
+        border: 1px solid #27ae60;
+        padding: 10px;
+        border-radius: 6px;
+        margin: 10px 0;
+        color: #27ae60;
+        font-size: 0.9em;
+        display: none;
+    }
+    
+    .filtros-activos.show {
+        display: block;
+    }
+    
+    .filtros-activos i {
+        margin-right: 5px;
+    }
+    
+    /* Mantener los estilos de las cards de recetas */
+    .receta-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 25px;
+        margin-bottom: 15px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .receta-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    
+    .receta-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    
+    .receta-titulo {
+        font-size: 1.3em;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .precio-badge {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    
+    .receta-descripcion {
+        color: #7f8c8d;
+        margin-bottom: 15px;
+        line-height: 1.4;
+    }
+    
+    .receta-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 15px;
+        font-size: 0.9em;
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .stat-item i {
+        color: #3498db;
+    }
+    
+    .estado-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .estado-badge.activo {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .estado-badge.inactivo {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .receta-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #ecf0f1;
+        flex-wrap: wrap;
+    }
+    
+    /* Estilos para paginación */
+    .pagination-container {
+        margin: 30px 20px;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .page-item {
+        margin: 0;
+    }
+    
+    .page-link {
+        display: block;
+        padding: 8px 16px;
+        color: #3498db;
+        text-decoration: none;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        min-width: 44px;
+        text-align: center;
+    }
+    
+    .page-link:hover {
+        background-color: #3498db;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+        text-decoration: none;
+    }
+    
+    .page-item.active .page-link {
+        background-color: #2c3e50;
+        color: white;
+        border-color: #2c3e50;
+        font-weight: bold;
+    }
+    
+    .page-item.active .page-link:hover {
+        background-color: #34495e;
+        border-color: #34495e;
+    }
+    
+    @media (max-width: 768px) {
+        .recetas-grid {
+            grid-template-columns: 1fr;
+            padding: 15px;
+            margin: 20px 10px;
+        }
+        
+        .filtros-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .pagination-container {
+            margin: 20px 10px;
+            padding: 15px;
+        }
+        
+        .page-link {
+            padding: 6px 12px;
+            font-size: 0.9em;
+            min-width: 38px;
+        }
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="contenedor">
+        <div class="tabla">
+            <section class="card">
+                <!-- Header -->
+                <div class="encabezado">
+                    <h2><i class='bx bx-restaurant'></i> Gestión de Recetas</h2>
+                    <div class="acciones-principales">
+                        <a href="{% url 'recetas:crear' %}" class="export-btn">
+                            <i class='bx bx-plus'></i>
+                            Nueva Receta
+                        </a>
+                        <a href="{% url 'recetas:exportar_pdf' %}" class="export-btn">
+                            <i class='bx bx-file-export'></i>
+                            Reporte PDF
+                        </a>
+                        <a href="{% url 'recetas:migrar_excel' %}" class="export-btn">
+                            <i class='bx bx-upload'></i>
+                            Migrar
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Estadísticas Mejoradas -->
+                <div class="estadisticas-modern">
+                    <div class="stats-container">
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern total">
+                                <i class='bx bx-restaurant'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ total_recetas }}</h3>
+                                <p>Total Recetas</p>
+                                <div class="stat-trend">
+                                    <i class='bx bx-trending-up'></i>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern activos">
+                                <i class='bx bx-check-circle'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ recetas_activas }}</h3>
+                                <p>Recetas Activas</p>
+                                <div class="stat-trend positive">
+                                    <i class='bx bx-check-circle'></i>
+                                    <span>Activas</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern inactivos">
+                                <i class='bx bx-error-alt'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ recetas_inactivas }}</h3>
+                                <p>Recetas Inactivas</p>
+                                <div class="stat-trend negative">
+                                    <i class='bx bx-x-circle'></i>
+                                    <span>Inactivas</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros por Columnas -->
+                <div class="table-header">
+                    <h3><i class='bx bx-filter'></i> Filtros Avanzados</h3>
+                    <button type="button" class="btn-clear-filters" id="clear-filters">
+                        <i class='bx bx-filter-alt'></i>
+                        Limpiar Filtros
+                    </button>
+                </div>
+                
+                <div class="filtros-columnas">
+                    <div class="filtros-grid-columnas">
+                        <div class="filtro-columna">
+                            <div class="column-header">
+                                <div class="column-title">
+                                    <i class='bx bx-restaurant'></i> Nombre
+                                </div>
+                                <input type="text" class="filter-input" placeholder="Filtrar por nombre..." data-column="nombre">
+                            </div>
+                        </div>
+                        
+                        <div class="filtro-columna">
+                            <div class="column-header">
+                                <div class="column-title">
+                                    <i class='bx bx-dollar'></i> Precio
+                                </div>
+                                <input type="text" class="filter-input" placeholder="Ej: >10, <50, 10-20" data-column="precio">
+                            </div>
+                        </div>
+                        
+
+                        
+                        <div class="filtro-columna">
+                            <div class="column-header">
+                                <div class="column-title">
+                                    <i class='bx bx-package'></i> Ingredientes
+                                </div>
+                                <input type="text" class="filter-input" placeholder="Cantidad de ingredientes" data-column="ingredientes">
+                            </div>
+                        </div>
+                        
+                        <div class="filtro-columna">
+                            <div class="column-header">
+                                <div class="column-title">
+                                    <i class='bx bx-check-circle'></i> Disponibilidad
+                                </div>
+                                <select class="filter-input" data-column="disponibilidad">
+                                    <option value="">Todas</option>
+                                    <option value="Disponible">Disponible</option>
+                                    <option value="No disponible">No disponible</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="filtro-columna">
+                            <div class="column-header">
+                                <div class="column-title">
+                                    <i class='bx bx-detail'></i> Descripción
+                                </div>
+                                <input type="text" class="filter-input" placeholder="Buscar en descripción..." data-column="descripcion">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid de Recetas -->
+                <div class="table-header">
+                    <h3><i class='bx bx-restaurant'></i> Lista de Recetas</h3>
+                </div>
+                
+                <div class="recetas-grid">
+        {% for receta in recetas %}
+        <div class="receta-card">
+            <div class="receta-header">
+                <h3 class="receta-titulo">{{ receta.nombre }}</h3>
+                <div class="precio-badge">{{ receta.precio_formateado }}</div>
+            </div>
+            
+            {% if receta.descripcion %}
+            <p class="receta-descripcion">{{ receta.descripcion|truncatewords:20 }}</p>
+            {% endif %}
+            
+            <div class="receta-stats">
+                <div class="stat-item">
+                    <i class='bx bx-package'></i>
+                    <span>{{ receta.ingredientes.count }} ingredientes</span>
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                <span class="estado-badge {{ receta.estado|lower }}">
+                    {{ receta.estado }}
+                </span>
+                
+                {% with puede_producir=receta.puede_producirse %}
+                {% if puede_producir.0 %}
+                    <span class="disponibilidad-badge disponible" style="color: #27ae60; font-weight: bold;">
+                        <i class='bx bx-check-circle'></i> Disponible
+                    </span>
+                {% else %}
+                    <span class="disponibilidad-badge no-disponible" style="color: #e74c3c; font-weight: bold;">
+                        <i class='bx bx-x-circle'></i> No disponible
+                    </span>
+                {% endif %}
+                {% endwith %}
+            </div>
+            
+            <div class="receta-actions">
+                <a href="{% url 'recetas:ingredientes' receta.id_rec %}" 
+                   class="btn btn-outline-success btn-sm" title="Gestionar ingredientes">
+                    <i class='bx bx-list-ul'></i>
+                </a>
+                
+                <a href="{% url 'recetas:editar' receta.id_rec %}" 
+                   class="btn btn-outline-warning btn-sm" title="Editar">
+                    <i class='bx bx-edit'></i>
+                </a>
+                
+                <form method="post" action="{% url 'recetas:cambiar_estado' receta.id_rec %}" 
+                      style="display: inline;" onsubmit="return confirm('¿Cambiar el estado de esta receta?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-info btn-sm" 
+                            title="Cambiar estado">
+                        <i class='bx bx-toggle-{% if receta.estado == 'Activo' %}right{% else %}left{% endif %}'></i>
+                    </button>
+                </form>
+                
+                <form method="post" action="{% url 'recetas:eliminar' receta.id_rec %}" 
+                      style="display: inline;" onsubmit="return confirm('¿Está seguro de eliminar esta receta?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Eliminar">
+                        <i class='bx bx-trash'></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+            <i class='bx bx-restaurant' style="font-size: 4em; color: #bdc3c7; margin-bottom: 20px;"></i>
+            <h3 style="color: #7f8c8d; margin-bottom: 10px;">No hay recetas</h3>
+            <p style="color: #95a5a6;">
+                {% if busqueda or estado_filtro or precio_min or precio_max %}
+                    No se encontraron recetas con los filtros aplicados.
+                {% else %}
+                    Comienza creando tu primera receta.
+                {% endif %}
+            </p>
+            <a href="{% url 'recetas:crear' %}" class="btn btn-primary" style="margin-top: 15px;">
+                <i class='bx bx-plus'></i>
+                Crear Primera Receta
+            </a>
+        </div>
+        {% endfor %}
+                </div>
+
+                <!-- Paginación -->
+                {% if recetas.has_other_pages %}
+                <div class="pagination-container">
+                    <nav aria-label="Paginación de recetas">
+                        <ul class="pagination">
+                            {% if recetas.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if busqueda %}&busqueda={{ busqueda }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}{% if precio_min %}&precio_min={{ precio_min }}{% endif %}{% if precio_max %}&precio_max={{ precio_max }}{% endif %}" title="Primera página">
+                                        <i class='bx bx-first-page'></i>
+                                        Primera
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ recetas.previous_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}{% if precio_min %}&precio_min={{ precio_min }}{% endif %}{% if precio_max %}&precio_max={{ precio_max }}{% endif %}" title="Página anterior">
+                                        <i class='bx bx-chevron-left'></i>
+                                        Anterior
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            <!-- Páginas numéricas -->
+                            {% for num in recetas.paginator.page_range %}
+                                {% if num == recetas.number %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > recetas.number|add:'-3' and num < recetas.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}{% if precio_min %}&precio_min={{ precio_min }}{% endif %}{% if precio_max %}&precio_max={{ precio_max }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if recetas.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ recetas.next_page_number }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}{% if precio_min %}&precio_min={{ precio_min }}{% endif %}{% if precio_max %}&precio_max={{ precio_max }}{% endif %}" title="Página siguiente">
+                                        Siguiente
+                                        <i class='bx bx-chevron-right'></i>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ recetas.paginator.num_pages }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}{% if estado_filtro %}&estado={{ estado_filtro }}{% endif %}{% if precio_min %}&precio_min={{ precio_min }}{% endif %}{% if precio_max %}&precio_max={{ precio_max }}{% endif %}" title="Última página">
+                                        Última
+                                        <i class='bx bx-last-page'></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                        
+                        <!-- Información de paginación -->
+                        <div class="pagination-info" style="text-align: center; margin-top: 15px; color: #7f8c8d; font-size: 0.9em;">
+                            <i class='bx bx-info-circle'></i>
+                            Mostrando página {{ recetas.number }} de {{ recetas.paginator.num_pages }} 
+                            ({{ recetas.paginator.count }} recetas en total)
+                        </div>
+                    </nav>
+                </div>
+                {% endif %}
+
+                <!-- Botón Volver -->
+                <div class="volver-section">
+                    <a href="{% url 'dashboard' %}" class="btn-back">
+                        <i class='bx bx-chevron-left'></i> 
+                        Volver
+                    </a>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+
+<!-- Modal para Migrar Excel -->
+<div id="modalMigrar" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, #27ae60, #229954); color: white;">
+            <h3><i class='bx bx-upload'></i> Importar Recetas desde Excel</h3>
+            <button class="modal-close" onclick="cerrarModalMigrar()" style="color: white;">&times;</button>
+        </div>
+        <form method="post" action="{% url 'recetas:migrar_excel' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="modal-body">
+                <div class="campo">
+                    <label>
+                        <i class='bx bx-file'></i>
+                        Archivo Excel
+                    </label>
+                    <input type="file" name="excel" accept=".xlsx,.xls" required class="input">
+                    <span class="help-text">
+                        Formato: Nombre | Descripción | Precio
+                    </span>
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>Instrucciones:</strong><br>
+                    • La primera fila debe contener los encabezados<br>
+                    • Columnas: Nombre, Descripción, Precio<br>
+                    • Se omitirán las recetas duplicadas
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" onclick="cerrarModalMigrar()" class="btn btn-secondary">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <i class='bx bx-upload'></i>
+                    Importar
+                </button>
+            </div>
+        </form>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function abrirModalMigrar() {
+    document.getElementById('modalMigrar').style.display = 'flex';
+}
+
+function cerrarModalMigrar() {
+    document.getElementById('modalMigrar').style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera
+document.getElementById('modalMigrar').addEventListener('click', function(e) {
+    if (e.target === this) {
+        cerrarModalMigrar();
+    }
+});
+
+// Sistema de filtros por columnas para cards de recetas
+class RecetasFilter {
+    constructor() {
+        this.filterInputs = document.querySelectorAll('.filter-input');
+        this.recetaCards = document.querySelectorAll('.receta-card');
+        this.clearButton = document.getElementById('clear-filters');
+        this.init();
+    }
+    
+    init() {
+        // Agregar event listeners a todos los filtros
+        this.filterInputs.forEach(input => {
+            input.addEventListener('input', () => this.applyFilters());
+            input.addEventListener('change', () => this.applyFilters());
+        });
+        
+        // Botón limpiar filtros
+        this.clearButton.addEventListener('click', () => this.clearAllFilters());
+    }
+    
+    applyFilters() {
+        let visibleCount = 0;
+        
+        this.recetaCards.forEach(card => {
+            let shouldShow = true;
+            
+            // Obtener datos de la card
+            const cardData = this.extractCardData(card);
+            
+            // Aplicar cada filtro
+            this.filterInputs.forEach(input => {
+                const filterValue = input.value.toLowerCase().trim();
+                if (!filterValue) return;
+                
+                const column = input.dataset.column;
+                
+                switch(column) {
+                    case 'nombre':
+                        if (!cardData.nombre.includes(filterValue)) shouldShow = false;
+                        break;
+                    case 'precio':
+                        if (!this.matchPriceFilter(cardData.precio, filterValue)) shouldShow = false;
+                        break;
+                    case 'ingredientes':
+                        if (!this.matchNumberFilter(cardData.ingredientes, filterValue)) shouldShow = false;
+                        break;
+                    case 'disponibilidad':
+                        if (cardData.disponibilidad.toLowerCase() !== filterValue.toLowerCase()) shouldShow = false;
+                        break;
+                    case 'descripcion':
+                        if (!cardData.descripcion.includes(filterValue)) shouldShow = false;
+                        break;
+                }
+            });
+            
+            // Mostrar/ocultar card
+            if (shouldShow) {
+                card.classList.remove('hidden');
+                visibleCount++;
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+        
+        this.updateFilterStatus(visibleCount);
+    }
+    
+    extractCardData(card) {
+        const nombre = card.querySelector('.receta-titulo')?.textContent.toLowerCase() || '';
+        const precioText = card.querySelector('.precio-badge')?.textContent || '$0';
+        const precio = parseFloat(precioText.replace(/[^0-9.]/g, '')) || 0;
+        const estado = card.querySelector('.estado-badge')?.textContent.toLowerCase() || '';
+        const ingredientesText = card.querySelector('.stat-item')?.textContent || '0';
+        const ingredientes = parseInt(ingredientesText.match(/\d+/)?.[0]) || 0;
+        // Buscar el indicador de disponibilidad usando las clases
+        const disponibilidadEl = card.querySelector('.disponibilidad-badge');
+        let disponibilidad = 'No disponible';
+        if (disponibilidadEl) {
+            if (disponibilidadEl.classList.contains('disponible')) {
+                disponibilidad = 'Disponible';
+            } else {
+                disponibilidad = 'No disponible';
+            }
+        }
+        const descripcion = card.querySelector('.receta-descripcion')?.textContent.toLowerCase() || '';
+        
+        return { nombre, precio, estado, ingredientes, disponibilidad, descripcion };
+    }
+    
+    matchPriceFilter(price, filter) {
+        // Soporta: >10, <50, 10-20, =15
+        if (filter.includes('-')) {
+            const [min, max] = filter.split('-').map(v => parseFloat(v.trim()));
+            return price >= min && price <= max;
+        } else if (filter.startsWith('>')) {
+            return price > parseFloat(filter.substring(1));
+        } else if (filter.startsWith('<')) {
+            return price < parseFloat(filter.substring(1));
+        } else if (filter.startsWith('=')) {
+            return Math.abs(price - parseFloat(filter.substring(1))) < 0.01;
+        } else {
+            return price.toString().includes(filter);
+        }
+    }
+    
+    matchNumberFilter(number, filter) {
+        // Soporta: >5, <10, 5-10, =3
+        if (filter.includes('-')) {
+            const [min, max] = filter.split('-').map(v => parseInt(v.trim()));
+            return number >= min && number <= max;
+        } else if (filter.startsWith('>')) {
+            return number > parseInt(filter.substring(1));
+        } else if (filter.startsWith('<')) {
+            return number < parseInt(filter.substring(1));
+        } else if (filter.startsWith('=')) {
+            return number === parseInt(filter.substring(1));
+        } else {
+            return number.toString().includes(filter);
+        }
+    }
+    
+    updateFilterStatus(visibleCount) {
+        const total = this.recetaCards.length;
+        const hasActiveFilters = Array.from(this.filterInputs).some(input => input.value.trim());
+        
+        // Agregar indicador de resultados si no existe
+        let indicator = document.querySelector('.filtros-activos');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.className = 'filtros-activos';
+            document.querySelector('.filtros-columnas').appendChild(indicator);
+        }
+        
+        if (hasActiveFilters) {
+            indicator.innerHTML = `<i class='bx bx-filter'></i> Mostrando ${visibleCount} de ${total} recetas`;
+            indicator.classList.add('show');
+        } else {
+            indicator.classList.remove('show');
+        }
+    }
+    
+    clearAllFilters() {
+        this.filterInputs.forEach(input => {
+            if (input.type === 'text' || input.type === 'number') {
+                input.value = '';
+            } else if (input.tagName === 'SELECT') {
+                input.selectedIndex = 0;
+            }
+        });
+        
+        this.recetaCards.forEach(card => {
+            card.classList.remove('hidden');
+        });
+        
+        this.updateFilterStatus(this.recetaCards.length);
+    }
+}
+
+// Función para confirmar sincronización de recetas
+function confirmarSincronizacion() {
+    const confirmacion = confirm(
+        '¿Está seguro de que desea sincronizar todas las recetas?\n\n' +
+        'Esta acción:\n' +
+        '• Actualizará el estado de todos los ingredientes según el stock de insumos\n' +
+        '• Desactivará recetas que tengan ingredientes agotados\n' +
+        '• Reactivará recetas cuyos ingredientes estén disponibles\n\n' +
+        'El proceso puede tomar unos segundos.'
+    );
+    
+    if (confirmacion) {
+        // Crear y enviar formulario
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "recetas:sincronizar_todas" %}';
+        
+        // Agregar token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Inicializar filtros cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    new RecetasFilter();
+});
+</script>
+{% endblock %}

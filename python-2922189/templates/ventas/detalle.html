@@ -1,0 +1,512 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle Venta #{{ venta.id_ven }} - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ventas.css' %}">
+<style>
+.home {
+    position: relative;
+    min-height: 100vh;
+    left: 250px;
+    width: calc(100% - 250px);
+    transition: left 0.3s ease, width 0.3s ease;
+    padding: 20px;
+}
+
+.sidebar.close ~ .home {
+    left: 88px;
+    width: calc(100% - 88px);
+}
+
+.detalle-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header similar a producción */
+.venta-header {
+    background: linear-gradient(135deg, #dc3545, #b71c1c);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+}
+
+.venta-header h2 {
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 2rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.info-item {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.info-item label {
+    display: block;
+    font-size: 12px;
+    opacity: 0.8;
+    margin-bottom: 5px;
+}
+
+.info-item strong {
+    font-size: 16px;
+    display: block;
+}
+
+.section-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 25px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 20px;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.acciones-venta {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.tabla-detalles {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.tabla-detalles thead {
+    background: #f8f9fa;
+}
+
+.tabla-detalles th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    font-size: 13px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.tabla-detalles td {
+    padding: 12px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.tabla-detalles tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 48px;
+    opacity: 0.3;
+    margin-bottom: 15px;
+}
+
+.resumen-pago {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.resumen-pago-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.resumen-item {
+    text-align: center;
+}
+
+.resumen-item label {
+    display: block;
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.resumen-item .valor {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.resumen-item.total .valor {
+    color: #17a2b8;
+}
+
+.resumen-item.pagado .valor {
+    color: #28a745;
+}
+
+.resumen-item.pendiente .valor {
+    color: #ffc107;
+}
+
+@media (max-width: 768px) {
+    .home {
+        left: 0;
+        width: 100%;
+        padding: 10px;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .acciones-venta {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="detalle-container">
+        <!-- Header de Venta -->
+        <div class="venta-header">
+            <h2>
+                <i class='bx bx-cart'></i>
+                Detalle de Venta #{{ venta.id_ven }}
+            </h2>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Cliente</label>
+                    <strong>{{ venta.cliente.nombre }}</strong>
+                </div>
+                <div class="info-item">
+                    <label>Fecha</label>
+                    <strong>{{ venta.fecha|date:"d/m/Y H:i" }}</strong>
+                </div>
+                <div class="info-item">
+                    <label>Tipo</label>
+                    <strong>{{ venta.get_tipo_display }}</strong>
+                </div>
+                <div class="info-item">
+                    <label>Estado</label>
+                    <strong>{{ venta.estado }}</strong>
+                </div>
+                <div class="info-item">
+                    <label>Total</label>
+                    <strong>${{ venta.total|floatformat:0 }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {% if message.tags == "success" %}
+                    <i class='bx bx-check-circle'></i>
+                {% else %}
+                    <i class='bx bx-error-circle'></i>
+                {% endif %}
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Información de Pago (estilo producción) -->
+        <div class="section-card" style="background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 30px;">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e9ecef;">
+                <h3 style="color: #28a745; display: flex; align-items: center; gap: 10px;"><i class='bx bx-money'></i> Información de Pago</h3>
+                <a href="{% url 'ventas:pagos' venta.id_ven %}" class="btn-action btn-recetas" style="background: #17a2b8; color: white; border: none; padding: 10px 22px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                    <i class='bx bx-dollar-circle'></i>
+                    Gestionar Pagos
+                </a>
+            </div>
+            <div class="detail-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 10px;">
+                <div class="detail-card" style="background: #f8f9fa; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <h4 style="margin: 0 0 8px 0; color: #495057; font-size: 1rem;"><i class='bx bx-receipt'></i> Total Venta</h4>
+                    <p class="value" style="font-size: 1.3rem; font-weight: bold; color: #dc3545; margin: 0;">${{ venta.total|floatformat:0 }}</p>
+                </div>
+                <div class="detail-card" style="background: #f8f9fa; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <h4 style="margin: 0 0 8px 0; color: #495057; font-size: 1rem;"><i class='bx bx-check-circle'></i> Total Pagado</h4>
+                    <p class="value" style="font-size: 1.3rem; font-weight: bold; color: #28a745; margin: 0;">${{ total_pagado|floatformat:0 }}</p>
+                </div>
+                <div class="detail-card" style="background: #f8f9fa; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <h4 style="margin: 0 0 8px 0; color: #495057; font-size: 1rem;"><i class='bx bx-error-circle'></i> Saldo Pendiente</h4>
+                    <p class="value" style="font-size: 1.3rem; font-weight: bold; color: #ffc107; margin: 0;">${{ saldo_pendiente|floatformat:0 }}</p>
+                </div>
+            </div>
+
+            <!-- Últimos pagos -->
+            {% if pagos %}
+            <h4 style="margin-top: 20px; color: #2c3e50;">Últimos Pagos</h4>
+            <table class="tabla-detalles">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Monto</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pago in pagos|slice:":3" %}
+                    <tr>
+                        <td>{{ pago.fecha_pago|date:"d/m/Y H:i" }}</td>
+                        <td><strong>${{ pago.monto|floatformat:0 }}</strong></td>
+                        <td>{{ pago.get_tipo_pago_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="text-align: center; color: #6c757d; margin-top: 20px;">
+                No hay pagos registrados
+            </p>
+            {% endif %}
+        </div>
+
+
+        <!-- Recetas asociadas a la venta -->
+        <div class="section-card" style="background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 30px;">
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e9ecef;">
+                <h3 style="color: #dc3545; display: flex; align-items: center; gap: 10px;"><i class='bx bx-basket'></i> Recetas Asociadas</h3>
+                <span class="badge badge-info" style="background: #d1ecf1; color: #0c5460; padding: 6px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;">{{ recetas_venta|length }} receta{{ recetas_venta|length|pluralize }}</span>
+            </div>
+            <table class="recipes-table" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th style="background: #f8f9fa; font-weight: 600; color: #495057; padding: 12px 15px; border-bottom: 1px solid #e9ecef;">Receta</th>
+                        <th style="background: #f8f9fa; font-weight: 600; color: #495057; padding: 12px 15px; border-bottom: 1px solid #e9ecef;">Cantidad</th>
+                        <th style="background: #f8f9fa; font-weight: 600; color: #495057; padding: 12px 15px; border-bottom: 1px solid #e9ecef;">Precio Unit.</th>
+                        <th style="background: #f8f9fa; font-weight: 600; color: #495057; padding: 12px 15px; border-bottom: 1px solid #e9ecef;">Subtotal</th>
+                        <th style="background: #f8f9fa; font-weight: 600; color: #495057; padding: 12px 15px; border-bottom: 1px solid #e9ecef;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for receta_venta in recetas_venta %}
+                    <tr style="background: white;">
+                        <td style="padding: 12px 15px; border-bottom: 1px solid #e9ecef;">{{ receta_venta.receta.nombre }}</td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid #e9ecef;">{{ receta_venta.cantidad }}</td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid #e9ecef;">${{ receta_venta.precio|floatformat:0 }}</td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid #e9ecef;"><strong>${{ receta_venta.subtotal|floatformat:0 }}</strong></td>
+                        <td style="padding: 12px 15px; border-bottom: 1px solid #e9ecef;">
+                            <button class="btn-view btn-ver-ingredientes" 
+                                    data-receta-id="{{ receta_venta.receta.id_rec }}" 
+                                    data-receta-nombre="{{ receta_venta.receta.nombre }}"
+                                    title="Ver ingredientes"
+                                    style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s ease;">
+                                <i class='bx bx-show'></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <i class='bx bx-basket'></i>
+                            <p>No hay recetas asociadas a esta venta</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal para ingredientes de receta -->
+        <div id="modalIngredientes" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close-modal" style="float:right;cursor:pointer;font-size:24px;">&times;</span>
+                <h3 id="modalRecetaNombre"><i class='bx bx-package'></i> Ingredientes</h3>
+                <div id="modalIngredientesBody">
+                    <p style="text-align:center;color:#888;">Cargando ingredientes...</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mostrar modal y cargar ingredientes por AJAX
+            document.querySelectorAll('.btn-ver-ingredientes').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var recetaId = this.getAttribute('data-receta-id');
+                    var recetaNombre = this.getAttribute('data-receta-nombre');
+                    var modal = document.getElementById('modalIngredientes');
+                    var modalBody = document.getElementById('modalIngredientesBody');
+                    var modalTitle = document.getElementById('modalRecetaNombre');
+                    modalTitle.innerHTML = "<i class='bx bx-package'></i> Ingredientes de: " + recetaNombre;
+                    modalBody.innerHTML = '<p style="text-align:center;color:#888;">Cargando ingredientes...</p>';
+                    modal.style.display = 'block';
+                    fetch('/ventas/ajax/ingredientes-receta/' + recetaId + '/')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.ingredientes && data.ingredientes.length > 0) {
+                                let html = '<ul style="list-style:none;padding:0;">';
+                                data.ingredientes.forEach(function(ing) {
+                                    html += `<li style="margin-bottom:8px;"><strong>${ing.nombre}</strong> - ${ing.cantidad} ${ing.unidad} <span style="color:${ing.estado=='Activo'?'#28a745':'#dc3545'};font-weight:bold;">${ing.estado}</span></li>`;
+                                });
+                                html += '</ul>';
+                                modalBody.innerHTML = html;
+                            } else {
+                                modalBody.innerHTML = '<div class="empty-state"><i class="bx bx-package"></i><h3>Sin ingredientes registrados</h3><p>Esta receta no tiene ingredientes asociados</p></div>';
+                            }
+                        })
+                        .catch(() => {
+                            modalBody.innerHTML = '<p style="color:#dc3545;">Error al cargar ingredientes</p>';
+                        });
+                });
+            });
+            // Cerrar modal
+            document.querySelectorAll('.close-modal').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.getElementById('modalIngredientes').style.display = 'none';
+                });
+            });
+            // Cerrar modal al hacer click fuera del contenido
+            window.onclick = function(event) {
+                var modal = document.getElementById('modalIngredientes');
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        });
+        </script>
+
+        <!-- Acciones (estilo producción) -->
+        <div class="actions-section" style="background: white; border-radius: 15px; padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center;">
+            <h3 style="color: #2c3e50; display: flex; align-items: center; gap: 10px; justify-content: center;"><i class='bx bx-cog'></i> Acciones Disponibles</h3>
+            <div class="action-buttons" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+                <a href="{% url 'ventas:pagos' venta.id_ven %}" class="btn-action btn-recetas" style="background: #17a2b8; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 10px; min-width: 150px; justify-content: center;">
+                    <i class='bx bx-dollar-circle'></i>
+                    Gestionar Pagos
+                </a>
+                {% if puede_editar %}
+                <a href="{% url 'ventas:editar' venta.id_ven %}" class="btn-action btn-warning" style="background: #ffc107; color: #212529; border: none; padding: 15px 30px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 10px; min-width: 150px; justify-content: center;">
+                    <i class='bx bx-edit'></i>
+                    Editar Venta
+                </a>
+                {% endif %}
+                <a href="{% url 'ventas:index' %}" class="btn-action btn-secondary" style="background: #6c757d; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 10px; min-width: 150px; justify-content: center;">
+                    <i class='bx bx-arrow-back'></i>
+                    Volver a Lista
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

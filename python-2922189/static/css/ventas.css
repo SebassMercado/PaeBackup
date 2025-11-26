@@ -1,0 +1,539 @@
+/* Estilos para el módulo de ventas */
+
+.ventas-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Header con estadísticas */
+.ventas-header {
+    background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 25px rgba(183, 28, 28, 0.3);
+}
+
+.header-info h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.header-info p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #fff;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Barra de acciones */
+.actions-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.actions-left, .actions-right {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: #b71c1c;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #8b0000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(183, 28, 28, 0.4);
+}
+
+.btn-info {
+    background: #2196F3;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #1976D2;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+.btn-outline-primary {
+    background: transparent;
+    color: #b71c1c;
+    border: 2px solid #b71c1c;
+}
+
+.btn-outline-primary:hover {
+    background: #b71c1c;
+    color: white;
+}
+
+/* Panel de filtros */
+.filtros-panel {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.form-control {
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    transition: border-color 0.3s ease;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    border-color: #b71c1c;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
+}
+
+.filtros-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+/* Tabla de ventas */
+.ventas-table-container {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table-ventas {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+}
+
+.table-ventas th {
+    background: #f8f9fa;
+    padding: 1rem;
+    font-weight: 700;
+    color: #333;
+    border-bottom: 2px solid #dee2e6;
+    text-align: left;
+}
+
+.table-ventas td {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.venta-row:hover {
+    background: #f8f9fa;
+}
+
+.venta-link {
+    color: #b71c1c;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.venta-link:hover {
+    color: #8b0000;
+    text-decoration: underline;
+}
+
+.venta-fecha {
+    color: #666;
+}
+
+.venta-cliente small {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+/* Badges para tipos y estados */
+.badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Badges de tipo */
+.badge-tipo-directa {
+    background: #4CAF50;
+    color: white;
+}
+
+.badge-tipo-produccion {
+    background: #FF9800;
+    color: white;
+}
+
+.badge-tipo-mayorista {
+    background: #9C27B0;
+    color: white;
+}
+
+/* Badges de estado */
+.badge-estado-pendiente {
+    background: #FFC107;
+    color: #333;
+}
+
+.badge-estado-confirmada {
+    background: #2196F3;
+    color: white;
+}
+
+.badge-estado-enpreparacion {
+    background: #FF9800;
+    color: white;
+}
+
+.badge-estado-lista {
+    background: #8BC34A;
+    color: white;
+}
+
+.badge-estado-entregada {
+    background: #4CAF50;
+    color: white;
+}
+
+.badge-estado-cancelada {
+    background: #F44336;
+    color: white;
+}
+
+.venta-total {
+    font-weight: 700;
+    color: #2e7d32;
+    font-size: 1.1rem;
+}
+
+/* Botones de acciones */
+.btn-group {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.btn-group-sm .btn {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-outline-primary,
+.btn-outline-warning,
+.btn-outline-success {
+    border-width: 1px;
+    padding: 0.5rem 0.75rem;
+}
+
+.btn-outline-warning {
+    color: #ff9800;
+    border-color: #ff9800;
+}
+
+.btn-outline-warning:hover {
+    background: #ff9800;
+    color: white;
+}
+
+.btn-outline-success {
+    color: #4caf50;
+    border-color: #4caf50;
+}
+
+.btn-outline-success:hover {
+    background: #4caf50;
+    color: white;
+}
+
+/* Paginación */
+.pagination-container {
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0.5rem;
+}
+
+.page-item {
+    display: flex;
+}
+
+.page-link {
+    padding: 0.75rem 1rem;
+    color: #b71c1c;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    background: #b71c1c;
+    color: white;
+    border-color: #b71c1c;
+}
+
+.page-item.active .page-link {
+    background: #b71c1c;
+    color: white;
+    border-color: #b71c1c;
+}
+
+/* Estado vacío */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #666;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: #ccc;
+    margin-bottom: 2rem;
+}
+
+.empty-state h3 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .ventas-container {
+        padding: 1rem;
+    }
+    
+    .ventas-header {
+        padding: 1.5rem;
+    }
+    
+    .header-info h1 {
+        font-size: 2rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .actions-left, .actions-right {
+        justify-content: center;
+    }
+    
+    .filtros-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .table-ventas {
+        font-size: 0.9rem;
+    }
+    
+    .table-ventas th,
+    .table-ventas td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .venta-acciones .btn-group {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
+
+/* Modal para agregar/editar */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal[style*="block"] {
+    display: flex !important;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    padding: 20px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+
+.modal-close:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+@media (max-width: 576px) {
+    .ventas-header {
+        padding: 1rem;
+    }
+    
+    .header-info h1 {
+        font-size: 1.6rem;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+    }
+    
+    .btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .filtros-panel {
+        padding: 1rem;
+    }
+    
+    .table-ventas {
+        font-size: 0.8rem;
+    }
+}

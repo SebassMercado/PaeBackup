@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Sistema PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .form-header h1 {
+        margin: 0;
+        font-size: 1.5em;
+    }
+    
+    .form-content {
+        padding: 30px;
+    }
+    
+    .form-grid {
+        display: grid;
+        gap: 20px;
+    }
+    
+    .campo-grupo {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .campo-completo {
+        grid-column: 1 / -1;
+    }
+    
+    .precio-input {
+        position: relative;
+    }
+    
+    .precio-input::before {
+        content: '$';
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #27ae60;
+        font-weight: bold;
+        font-size: 1.1em;
+        z-index: 1;
+    }
+    
+    .precio-input input {
+        padding-left: 30px;
+        font-weight: bold;
+    }
+    
+    .contador-caracteres {
+        text-align: right;
+        font-size: 0.8em;
+        color: #7f8c8d;
+        margin-top: 5px;
+    }
+    
+    .preview-card {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    
+    .preview-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+    
+    .preview-precio {
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+    
+    .preview-descripcion {
+        color: #7f8c8d;
+        line-height: 1.4;
+        margin-bottom: 10px;
+    }
+    
+    .preview-estado {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: bold;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+    
+    .preview-estado.activo {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .preview-estado.inactivo {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    .error-message {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .success-message {
+        background: #d4edda;
+        color: #155724;
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border: 1px solid #c3e6cb;
+    }
+    
+    @media (max-width: 768px) {
+        .campo-grupo {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .form-content {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="page-header">
+        <div class="header-content">
+            <h1>
+                <i class='bx bx-{% if receta %}edit{% else %}plus{% endif %}'></i>
+                {{ titulo }}
+            </h1>
+            <p class="page-description">
+                {% if receta %}
+                    Edita los datos de la receta
+                {% else %}
+                    Crea una nueva receta para el sistema
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <div class="form-header">
+            <h1>{{ titulo }}</h1>
+        </div>
+        
+        <div class="form-content">
+            <!-- Mostrar mensajes de error -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="post" id="recetaForm">
+                {% csrf_token %}
+                
+                <div class="form-grid">
+                    <!-- Nombre de la receta -->
+                    <div class="campo">
+                        <label for="nombre" class="required">
+                            <i class='bx bx-restaurant'></i>
+                            Nombre de la Receta
+                        </label>
+                        <input type="text" 
+                               id="nombre" 
+                               name="nombre" 
+                               class="input" 
+                               value="{% if receta %}{{ receta.nombre }}{% endif %}"
+                               placeholder="Ej: Hamburguesa Clásica"
+                               maxlength="50"
+                               required>
+                        <div class="contador-caracteres">
+                            <span id="nombre-contador">0</span>/50 caracteres
+                        </div>
+                    </div>
+                    
+                    <!-- Precio -->
+                    <div class="precio-input">
+                        <label for="precio" class="required">
+                            <i class='bx bx-dollar'></i>
+                            Precio de Venta
+                        </label>
+                        <input type="number" 
+                               id="precio" 
+                               name="precio" 
+                               class="input" 
+                               value="{% if receta %}{{ receta.precio }}{% endif %}"
+                               placeholder="0.00"
+                               step="0.01"
+                               min="0.01"
+                               required>
+                    </div>
+                    
+                    <!-- Descripción -->
+                    <div class="campo campo-completo">
+                        <label for="descripcion">
+                            <i class='bx bx-detail'></i>
+                            Descripción
+                        </label>
+                        <textarea id="descripcion" 
+                                  name="descripcion" 
+                                  class="input" 
+                                  rows="4"
+                                  placeholder="Describe los ingredientes principales, sabor, características especiales..."
+                                  maxlength="500">{% if receta %}{{ receta.descripcion }}{% endif %}</textarea>
+                        <div class="contador-caracteres">
+                            <span id="descripcion-contador">0</span>/500 caracteres
+                        </div>
+                    </div>
+                    
+                    <!-- Estado -->
+                    <div class="campo">
+                        <label for="estado">
+                            <i class='bx bx-toggle-right'></i>
+                            Estado
+                        </label>
+                        <select id="estado" name="estado" class="input">
+                            <option value="Activo" {% if not receta or receta.estado == 'Activo' %}selected{% endif %}>
+                                Activo - Disponible para venta
+                            </option>
+                            <option value="Inactivo" {% if receta and receta.estado == 'Inactivo' %}selected{% endif %}>
+                                Inactivo - Fuera del menú
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Vista previa -->
+                <div class="preview-card" id="preview" style="display: none;">
+                    <h3>Vista Previa</h3>
+                    <div class="preview-title" id="preview-nombre">Nombre de la receta</div>
+                    <div class="preview-precio" id="preview-precio">$0.00</div>
+                    <div class="preview-descripcion" id="preview-descripcion">Descripción de la receta...</div>
+                    <span class="preview-estado activo" id="preview-estado">Activo</span>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="form-actions">
+                    <a href="{% url 'recetas:index' %}" class="btn btn-secondary">
+                        <i class='bx bx-x'></i>
+                        Cancelar
+                    </a>
+                    
+                    <button type="button" onclick="togglePreview()" class="btn btn-info" id="preview-btn">
+                        <i class='bx bx-show'></i>
+                        Vista Previa
+                    </button>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class='bx bx-{% if receta %}save{% else %}plus{% endif %}'></i>
+                        {{ accion }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Referencias a elementos
+    const nombreInput = document.getElementById('nombre');
+    const descripcionInput = document.getElementById('descripcion');
+    const precioInput = document.getElementById('precio');
+    const estadoSelect = document.getElementById('estado');
+    
+    const nombreContador = document.getElementById('nombre-contador');
+    const descripcionContador = document.getElementById('descripcion-contador');
+    
+    const preview = document.getElementById('preview');
+    const previewBtn = document.getElementById('preview-btn');
+    const previewNombre = document.getElementById('preview-nombre');
+    const previewPrecio = document.getElementById('preview-precio');
+    const previewDescripcion = document.getElementById('preview-descripcion');
+    const previewEstado = document.getElementById('preview-estado');
+    
+    // Contadores de caracteres
+    function actualizarContador(input, contador) {
+        contador.textContent = input.value.length;
+        
+        // Cambiar color según límite
+        const porcentaje = (input.value.length / input.maxLength) * 100;
+        if (porcentaje > 80) {
+            contador.style.color = '#e74c3c';
+        } else if (porcentaje > 60) {
+            contador.style.color = '#f39c12';
+        } else {
+            contador.style.color = '#7f8c8d';
+        }
+    }
+    
+    // Inicializar contadores
+    actualizarContador(nombreInput, nombreContador);
+    actualizarContador(descripcionInput, descripcionContador);
+    
+    // Event listeners para contadores
+    nombreInput.addEventListener('input', () => actualizarContador(nombreInput, nombreContador));
+    descripcionInput.addEventListener('input', () => actualizarContador(descripcionInput, descripcionContador));
+    
+    // Vista previa
+    function actualizarPreview() {
+        const nombre = nombreInput.value || 'Nombre de la receta';
+        const precio = precioInput.value ? parseFloat(precioInput.value).toFixed(2) : '0.00';
+        const descripcion = descripcionInput.value || 'Descripción de la receta...';
+        const estado = estadoSelect.value;
+        
+        previewNombre.textContent = nombre;
+        previewPrecio.textContent = `$${precio}`;
+        previewDescripcion.textContent = descripcion;
+        previewEstado.textContent = estado;
+        previewEstado.className = `preview-estado ${estado.toLowerCase()}`;
+    }
+    
+    // Event listeners para vista previa
+    nombreInput.addEventListener('input', actualizarPreview);
+    precioInput.addEventListener('input', actualizarPreview);
+    descripcionInput.addEventListener('input', actualizarPreview);
+    estadoSelect.addEventListener('change', actualizarPreview);
+    
+    // Inicializar vista previa
+    actualizarPreview();
+    
+    // Toggle vista previa
+    window.togglePreview = function() {
+        if (preview.style.display === 'none') {
+            preview.style.display = 'block';
+            previewBtn.innerHTML = '<i class="bx bx-hide"></i> Ocultar Previa';
+            actualizarPreview();
+        } else {
+            preview.style.display = 'none';
+            previewBtn.innerHTML = '<i class="bx bx-show"></i> Vista Previa';
+        }
+    };
+    
+    // Validación del formulario
+    const form = document.getElementById('recetaForm');
+    form.addEventListener('submit', function(e) {
+        let valid = true;
+        let errors = [];
+        
+        // Validar nombre
+        if (!nombreInput.value.trim()) {
+            errors.push('El nombre de la receta es obligatorio');
+            valid = false;
+        }
+        
+        // Validar precio
+        const precio = parseFloat(precioInput.value);
+        if (!precio || precio <= 0) {
+            errors.push('El precio debe ser mayor que cero');
+            valid = false;
+        }
+        
+        if (!valid) {
+            e.preventDefault();
+            alert('Errores encontrados:\n' + errors.join('\n'));
+            return false;
+        }
+        
+        // Mostrar loading
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Guardando...';
+        
+        // Si todo está bien, permitir el envío
+        setTimeout(() => {
+            if (!form.submitted) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }, 5000);
+    });
+    
+    // Formatear precio mientras se escribe
+    precioInput.addEventListener('blur', function() {
+        const valor = parseFloat(this.value);
+        if (!isNaN(valor) && valor > 0) {
+            this.value = valor.toFixed(2);
+            actualizarPreview();
+        }
+    });
+    
+    // Capitalizar nombre automáticamente
+    nombreInput.addEventListener('blur', function() {
+        if (this.value) {
+            this.value = this.value.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+            actualizarPreview();
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}PAE - Sistema Interno{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}?v=1">
+{% endblock %}
+
+{% block login_content %}
+<div class="login-grid">
+  <section class="login-hero">
+    <img src="{% static 'img/Logo 2 sin fondo.png' %}" alt="Logo" style="width:72px;height:72px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25));">
+    <h1>PAE Sistema</h1>
+    <p class="lead">Gestión integral de producción, recetas, insumos y ventas en una sola plataforma optimizada.</p>
+    <div class="badge-group">
+      <span class="badge-role">ADMIN</span>
+      <span class="badge-role">VENTAS</span>
+      <span class="badge-role">PRODUCCIÓN</span>
+    </div>
+  </section>
+  <section class="login-card">
+    <div id="formModes">
+      <!-- Modo Login -->
+      <div id="modeLogin">
+        <h2>Iniciar Sesión</h2>
+        {% if messages %}
+        <div class="alerts">
+          {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <form method="post" id="loginForm">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="correoDoc">Email o Documento</label>
+            <input class="input-control" type="text" id="correoDoc" name="correoDoc" required autocomplete="username" placeholder="empleado@pae.com">
+          </div>
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <div class="password-wrapper">
+              <input class="input-control" type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+              <button class="toggle-pass" type="button" id="togglePassword" aria-label="Mostrar/Ocultar contraseña">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="login-button-main">
+            <span class="spinner" id="spinner" style="display:none"></span>
+            <span id="btnText">Acceder</span>
+          </button>
+          <div style="margin-top:.9rem; text-align:center; font-size:.75rem;">
+            <a href="#" id="goReset" style="color:var(--accent);text-decoration:none;">¿Olvidaste tu contraseña?</a> ·
+            <a href="/usuarios/password-reset/verify/" style="color:var(--accent);text-decoration:none;">Tengo un código</a>
+          </div>
+        </form>
+      </div>
+      <!-- Modo Recuperar -->
+      <div id="modeReset" style="display:none;">
+        <h2>Recuperar Contraseña</h2>
+        <p style="color:var(--text-soft);font-size:.75rem;margin-top:-.4rem;margin-bottom:1rem;">Ingresa tu correo o documento para enviarte un código y enlace de recuperación.</p>
+        <form method="post" action="/usuarios/password-reset/" id="resetForm">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="resetCorreoDocumento">Correo o Documento</label>
+            <input class="input-control" type="text" id="resetCorreoDocumento" name="correoDocumento" required placeholder="usuario@empresa.com" autocomplete="email">
+          </div>
+          <button type="submit" class="login-button-main">
+            <span class="spinner" id="resetSpinner" style="display:none"></span>
+            <span id="resetBtnText">Enviar código</span>
+          </button>
+          <div id="resetMsg" style="margin-top:.6rem;font-size:.7rem;color:var(--text-soft);"></div>
+          <div style="margin-top:.9rem; text-align:center; font-size:.75rem;">
+            <a href="#" id="backLogin" style="color:var(--accent);text-decoration:none;">Volver a inicio de sesión</a> ·
+            <a href="/usuarios/password-reset/verify/" style="color:var(--accent);text-decoration:none;">Ingresar código</a>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="footer-login">&copy; 2025 PAE • Plataforma Interna</div>
+  </section>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var form = document.getElementById('loginForm');
+  var pass = document.getElementById('password');
+  var toggle = document.getElementById('togglePassword');
+  var spinner = document.getElementById('spinner');
+  var btnText = document.getElementById('btnText');
+  if(toggle){
+    toggle.addEventListener('click', function(){
+      var is = pass.type === 'password';
+      pass.type = is ? 'text' : 'password';
+      toggle.textContent = is ? '🙈' : '👁';
+    });
+  }
+  if(form){
+    form.addEventListener('submit', function(){
+      spinner.style.display='inline-block';
+      btnText.textContent='Verificando...';
+    });
+  }
+  // Inline reset toggle
+  // Toggle modo
+  var goReset = document.getElementById('goReset');
+  var backLogin = document.getElementById('backLogin');
+  var modeLogin = document.getElementById('modeLogin');
+  var modeReset = document.getElementById('modeReset');
+  if(goReset){
+    goReset.addEventListener('click', function(e){
+      e.preventDefault();
+      modeLogin.style.display='none';
+      modeReset.style.display='block';
+    });
+  }
+  if(backLogin){
+    backLogin.addEventListener('click', function(e){
+      e.preventDefault();
+      modeReset.style.display='none';
+      modeLogin.style.display='block';
+    });
+  }
+  // Submit recuperación
+  var resetForm = document.getElementById('resetForm');
+  var resetSpinner = document.getElementById('resetSpinner');
+  var resetBtnText = document.getElementById('resetBtnText');
+  var resetMsg = document.getElementById('resetMsg');
+  if(resetForm){
+    resetForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      resetSpinner.style.display='inline-block';
+      resetBtnText.textContent='Enviando...';
+      resetMsg.textContent='';
+      var formData = new FormData(resetForm);
+      fetch(resetForm.action, {method:'POST', body:formData, headers:{'X-Requested-With':'XMLHttpRequest'}})
+        .then(r=>r.text())
+        .then(()=>{
+          resetSpinner.style.display='none';
+          resetBtnText.textContent='Enviar código';
+          resetMsg.style.color='var(--accent)';
+          resetMsg.textContent='Si existe, se envió código y enlace al correo.';
+        })
+        .catch(()=>{
+          resetSpinner.style.display='none';
+          resetBtnText.textContent='Enviar código';
+          resetMsg.style.color='#ef4444';
+          resetMsg.textContent='Error al enviar.';
+        });
+    });
+  }
+});
+</script>
+{% endblock %}

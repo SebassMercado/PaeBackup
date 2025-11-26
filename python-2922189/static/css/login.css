@@ -1,0 +1,23 @@
+/* Estilos específicos de login que complementan theme.css */
+.login-hero img { animation: floatLogo 6s ease-in-out infinite; }
+@keyframes floatLogo { 0%,100% { transform:translateY(0);} 50% { transform:translateY(-8px);} }
+.login-hero .badge-group { margin-top:.5rem; }
+
+/* Ajustes para roles chips */
+.badge-role { position:relative; overflow:hidden; }
+.badge-role:after { content:""; position:absolute; inset:0; background:linear-gradient(145deg,rgba(255,255,255,.2),rgba(255,255,255,0)); opacity:.35; }
+[data-theme='dark'] .badge-role:after { opacity:.18; }
+
+/* Sutilezas en la tarjeta */
+.login-card { backdrop-filter: blur(6px); }
+[data-theme='dark'] .login-card { backdrop-filter: blur(4px); }
+
+/* Placeholders modo oscuro mejorados */
+[data-theme='dark'] .input-control::placeholder { color:#666; }
+
+/* Accesibilidad focus para toggle password */
+.toggle-pass:focus { outline:2px solid var(--accent); outline-offset:2px; }
+
+/* Mejoras a alerts en dark */
+[data-theme='dark'] .alert-success { background:rgba(34,197,94,.12); }
+[data-theme='dark'] .alert-error { background:rgba(239,68,68,.12); }

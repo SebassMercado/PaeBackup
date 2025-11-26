@@ -1,0 +1,570 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Usuarios - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="contenedor">
+        <div class="tabla">
+            <section class="card">
+                <!-- Header -->
+                <div class="encabezado">
+                    <h2><i class='bx bx-bar-chart-big'></i> Gestión de Usuarios</h2>
+                    <div class="acciones-principales">
+                        <a href="{% url 'usuarios:nuevo' %}" class="export-btn">
+                            <i class='bx bx-user-plus'></i>
+                            Nuevo Usuario
+                        </a>
+                        <a href="{% url 'usuarios:exportar_pdf' %}" class="export-btn">
+                            <i class='bx bx-file-export'></i>
+                            Reporte PDF
+                        </a>
+                        <a href="{% url 'usuarios:correos' %}" class="export-btn">
+                            <i class='bx bx-mail-send'></i>
+                            Enviar Correos
+                        </a>
+                        <a href="{% url 'usuarios:migrar' %}" class="export-btn">
+                            <i class='bx bx-upload'></i>
+                            Migrar
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Estadísticas Mejoradas -->
+                <div class="estadisticas-modern">
+                    <div class="stats-container">
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern total">
+                                <i class='bx bx-group'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ total_usuarios }}</h3>
+                                <p>Total Usuarios</p>
+                                <div class="stat-trend">
+                                    <i class='bx bx-trending-up'></i>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern activos">
+                                <i class='bx bx-user-check'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ usuarios_activos }}</h3>
+                                <p>Usuarios Activos</p>
+                                <div class="stat-trend positive">
+                                    <i class='bx bx-check-circle'></i>
+                                    <span>Activos</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern inactivos">
+                                <i class='bx bx-user-x'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ usuarios_inactivos }}</h3>
+                                <p>Usuarios Inactivos</p>
+                                <div class="stat-trend negative">
+                                    <i class='bx bx-x-circle'></i>
+                                    <span>Inactivos</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Usuarios con Filtros -->
+                <div class="table-header">
+                    <h3><i class='bx bx-table'></i> Lista de Usuarios</h3>
+                    <button type="button" class="btn-clear-filters" id="clear-filters">
+                        <i class='bx bx-filter-alt'></i>
+                        Limpiar Filtros
+                    </button>
+                </div>
+
+                <div class="wrapper" id="tablaUsuariosWrapper">
+                    <table id="tablaUsuarios">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            ID <span class="draggable" data-col="0"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="0">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Documento <span class="draggable" data-col="1"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="1">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Nombres <span class="draggable" data-col="2"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="2">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Apellidos <span class="draggable" data-col="3"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="3">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Teléfono <span class="draggable" data-col="4"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="4">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Dirección <span class="draggable" data-col="5"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="5">
+                                    </div>
+                                </th>
+                                <th style="width:305px">
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Correo <span class="draggable" data-col="6"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="6">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Rol <span class="draggable" data-col="7"></span>
+                                        </div>
+                                        <select class="filter-input" data-column="7">
+                                            <option value="">Todos</option>
+                                            <option value="Administrador">Administrador</option>
+                                            <option value="Empleado de Producción">Producción</option>
+                                            <option value="Empleado de Ventas">Ventas</option>
+                                        </select>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Estado <span class="draggable" data-col="8"></span>
+                                        </div>
+                                        <select class="filter-input" data-column="8">
+                                            <option value="">Todos</option>
+                                            <option value="Activo">Activo</option>
+                                            <option value="Inactivo">Inactivo</option>
+                                        </select>
+                                    </div>
+                                </th>
+                                <th style="width:120px">
+                                    <div class="column-title">
+                                        Opciones
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                            <tr data-user-id="{{ usuario.id_usu }}">
+                                <td><span class="cell-content">{{ usuario.id_usu }}</span></td>
+                                <td><span class="cell-content">{{ usuario.documento }}</span></td>
+                                <td><span class="cell-content">{{ usuario.nombres }}</span></td>
+                                <td><span class="cell-content">{{ usuario.apellidos }}</span></td>
+                                <td><span class="cell-content">{{ usuario.telefono }}</span></td>
+                                <td><span class="cell-content">{{ usuario.direccion }}</span></td>
+                                <td><span class="cell-content">{{ usuario.correo }}</span></td>
+                                <td><span class="cell-content">{{ usuario.get_rol_display }}</span></td>
+                                <td class="estado-cell">
+                                    <span class="cell-content estado-badge {% if usuario.estado == 'A' %}activo{% else %}inactivo{% endif %}">
+                                        {% if usuario.estado == 'A' %}Activo{% else %}Inactivo{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="acciones">
+                                        <!-- Editar -->
+                                        <a href="{% url 'usuarios:editar' usuario.id_usu %}" 
+                                           class="btn btn-outline-success" 
+                                           title="Editar usuario">
+                                            <i class="bx bx-edit"></i>
+                                        </a>
+                                        
+                                        <!-- Cambiar Estado -->
+                                        <button class="btn btn-outline-warning cambiar-estado" 
+                                                data-user-id="{{ usuario.id_usu }}"
+                                                title="{% if usuario.estado == 'A' %}Desactivar{% else %}Activar{% endif %} usuario">
+                                            {% if usuario.estado == 'A' %}
+                                                <i class="bx bx-user-minus"></i>
+                                            {% else %}
+                                                <i class="bx bx-user-plus"></i>
+                                            {% endif %}
+                                        </button>
+                                        
+                                        <!-- Eliminar -->
+                                        <button class="btn btn-outline-danger eliminar-usuario" 
+                                                data-user-id="{{ usuario.id_usu }}"
+                                                data-user-name="{{ usuario.nombre_completo }}"
+                                                title="Eliminar usuario">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="10" class="no-data">
+                                    <div class="empty-state">
+                                        <i class='bx bx-user-x'></i>
+                                        <h3>No hay usuarios registrados</h3>
+                                        <p>Comienza creando tu primer usuario</p>
+                                        <a href="{% url 'usuarios:nuevo' %}" class="btn btn-primary">
+                                            <i class='bx bx-user-plus'></i>
+                                            Crear Usuario
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if usuarios.has_other_pages %}
+                <div class="paginacion">
+                    <div class="pagination-info">
+                        Página {{ usuarios.number }} de {{ usuarios.paginator.num_pages }}
+                        ({{ usuarios.paginator.count }} usuarios en total)
+                    </div>
+                    <div class="pagination-controls">
+                        {% if usuarios.has_previous %}
+                            <a href="?page=1" class="btn-pag">❮❮</a>
+                            <a href="?page={{ usuarios.previous_page_number }}" class="btn-pag">❮</a>
+                        {% endif %}
+                        
+                        <span class="page-current">{{ usuarios.number }}</span>
+                        
+                        {% if usuarios.has_next %}
+                            <a href="?page={{ usuarios.next_page_number }}" class="btn-pag">❯</a>
+                            <a href="?page={{ usuarios.paginator.num_pages }}" class="btn-pag">❯❯</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Botón Volver -->
+                <div class="volver-section">
+                    <a href="{% url 'dashboard' %}" class="btn-back">
+                        <i class='bx bx-chevron-left'></i> 
+                        Volver
+                    </a>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+
+<!-- Modal de Confirmación -->
+<div id="modalConfirmacion" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Confirmar Acción</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="mensajeConfirmacion"></p>
+            <input type="text" id="inputConfirmacion" placeholder="Escriba ELIMINAR para confirmar" style="display: none;">
+        </div>
+        <div class="modal-footer">
+            <button id="btnCancelar" class="btn btn-secondary">Cancelar</button>
+            <button id="btnConfirmar" class="btn btn-danger">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript para funcionalidades AJAX y modales
+document.addEventListener('DOMContentLoaded', function() {
+    // CSRF Token para AJAX
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Elementos del modal
+    const modal = document.getElementById('modalConfirmacion');
+    const modalClose = document.querySelector('.modal-close');
+    const btnCancelar = document.getElementById('btnCancelar');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    const mensajeConfirmacion = document.getElementById('mensajeConfirmacion');
+    const inputConfirmacion = document.getElementById('inputConfirmacion');
+    
+    let accionPendiente = null;
+    
+    // Funciones del modal
+    function abrirModal(mensaje, requireConfirmation = false) {
+        mensajeConfirmacion.textContent = mensaje;
+        if (requireConfirmation) {
+            inputConfirmacion.style.display = 'block';
+            inputConfirmacion.value = '';
+        } else {
+            inputConfirmacion.style.display = 'none';
+        }
+        modal.style.display = 'flex';
+    }
+    
+    function cerrarModal() {
+        modal.style.display = 'none';
+        accionPendiente = null;
+        inputConfirmacion.value = '';
+    }
+    
+    // Event listeners del modal
+    modalClose.addEventListener('click', cerrarModal);
+    btnCancelar.addEventListener('click', cerrarModal);
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) cerrarModal();
+    });
+    
+    // Cambiar estado de usuario
+    document.querySelectorAll('.cambiar-estado').forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            const row = this.closest('tr');
+            const estadoActual = row.querySelector('.estado-badge').textContent.trim();
+            const nuevoEstado = estadoActual === 'Activo' ? 'Desactivar' : 'Activar';
+            
+            accionPendiente = {
+                tipo: 'cambiar-estado',
+                userId: userId,
+                url: `/usuarios/cambiar-estado/${userId}/`,
+                row: row
+            };
+            
+            abrirModal(`¿Está seguro de ${nuevoEstado.toLowerCase()} este usuario?`);
+        });
+    });
+    
+    // Eliminar usuario
+    document.querySelectorAll('.eliminar-usuario').forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            const userName = this.getAttribute('data-user-name');
+            const row = this.closest('tr');
+            
+            accionPendiente = {
+                tipo: 'eliminar',
+                userId: userId,
+                userName: userName,
+                url: `/usuarios/eliminar/${userId}/`,
+                row: row
+            };
+            
+            abrirModal(`Para confirmar la eliminación del usuario ${userName}, escriba ELIMINAR:`, true);
+        });
+    });
+    
+    // Confirmar acción
+    btnConfirmar.addEventListener('click', function() {
+        if (!accionPendiente) return;
+        
+        // Validar confirmación para eliminación
+        if (accionPendiente.tipo === 'eliminar') {
+            const confirmacion = inputConfirmacion.value.trim().toUpperCase();
+            if (confirmacion !== 'ELIMINAR') {
+                alert('Debe escribir ELIMINAR para confirmar');
+                return;
+            }
+        }
+        
+        // Ejecutar acción AJAX
+        fetch(accionPendiente.url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensaje de éxito
+                mostrarMensaje(data.message, 'success');
+                
+                if (accionPendiente.tipo === 'eliminar') {
+                    // Eliminar fila de la tabla
+                    accionPendiente.row.remove();
+                    actualizarEstadisticas(-1, 0, 0);
+                } else if (accionPendiente.tipo === 'cambiar-estado') {
+                    // Actualizar estado en la tabla
+                    const estadoBadge = accionPendiente.row.querySelector('.estado-badge');
+                    const btnEstado = accionPendiente.row.querySelector('.cambiar-estado i');
+                    
+                    if (data.nuevo_estado === 'A') {
+                        estadoBadge.textContent = 'Activo';
+                        estadoBadge.className = 'cell-content estado-badge activo';
+                        btnEstado.className = 'bx bx-user-minus';
+                        actualizarEstadisticas(0, 1, -1);
+                    } else {
+                        estadoBadge.textContent = 'Inactivo';
+                        estadoBadge.className = 'cell-content estado-badge inactivo';
+                        btnEstado.className = 'bx bx-user-plus';
+                        actualizarEstadisticas(0, -1, 1);
+                    }
+                }
+            } else {
+                mostrarMensaje(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            mostrarMensaje('Error de conexión', 'error');
+        })
+        .finally(() => {
+            cerrarModal();
+        });
+    });
+    
+    // Función para mostrar mensajes
+    function mostrarMensaje(mensaje, tipo) {
+        // Crear elemento de mensaje
+        const msgElement = document.createElement('div');
+        msgElement.className = `alert alert-${tipo}`;
+        msgElement.textContent = mensaje;
+        msgElement.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            background: ${tipo === 'success' ? '#28a745' : '#dc3545'};
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        `;
+        
+        document.body.appendChild(msgElement);
+        
+        // Remover después de 3 segundos
+        setTimeout(() => {
+            msgElement.remove();
+        }, 3000);
+    }
+    
+    // Función para actualizar estadísticas
+    function actualizarEstadisticas(total, activos, inactivos) {
+        const totalElement = document.querySelector('.stat-card:nth-child(1) h3');
+        const activosElement = document.querySelector('.stat-card:nth-child(2) h3');
+        const inactivosElement = document.querySelector('.stat-card:nth-child(3) h3');
+        
+        if (total !== 0) {
+            const nuevoTotal = parseInt(totalElement.textContent) + total;
+            totalElement.textContent = nuevoTotal;
+        }
+        
+        if (activos !== 0) {
+            const nuevosActivos = parseInt(activosElement.textContent) + activos;
+            activosElement.textContent = nuevosActivos;
+        }
+        
+        if (inactivos !== 0) {
+            const nuevosInactivos = parseInt(inactivosElement.textContent) + inactivos;
+            inactivosElement.textContent = nuevosInactivos;
+        }
+    }
+    
+    // Sistema de filtros de columnas
+    const filterInputs = document.querySelectorAll('.filter-input');
+    const tableRows = document.querySelectorAll('#tablaUsuarios tbody tr');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const columnIndex = parseInt(this.getAttribute('data-column'));
+            const filterValue = this.value.toLowerCase().trim();
+            
+            tableRows.forEach(row => {
+                if (row.querySelector('.empty-state')) return; // Skip empty state row
+                
+                const cellValue = row.children[columnIndex].textContent.toLowerCase().trim();
+                const matches = cellValue.includes(filterValue);
+                
+                row.style.display = matches ? '' : 'none';
+            });
+            
+            // Actualizar contador de resultados visibles
+            actualizarContadorResultados();
+        });
+        
+        input.addEventListener('change', function() {
+            const columnIndex = parseInt(this.getAttribute('data-column'));
+            const filterValue = this.value.toLowerCase().trim();
+            
+            tableRows.forEach(row => {
+                if (row.querySelector('.empty-state')) return;
+                
+                const cellValue = row.children[columnIndex].textContent.toLowerCase().trim();
+                const matches = filterValue === '' || cellValue.includes(filterValue);
+                
+                row.style.display = matches ? '' : 'none';
+            });
+            
+            actualizarContadorResultados();
+        });
+    });
+    
+    // Función para actualizar contador de resultados
+    function actualizarContadorResultados() {
+        const visibleRows = document.querySelectorAll('#tablaUsuarios tbody tr:not([style*="display: none"])');
+        const emptyStateRow = document.querySelector('#tablaUsuarios tbody tr .empty-state');
+        const visibleCount = emptyStateRow ? 0 : visibleRows.length;
+        
+        // Actualizar info de paginación si existe
+        const paginationInfo = document.querySelector('.pagination-info');
+        if (paginationInfo && !emptyStateRow) {
+            if (visibleCount === 0) {
+                paginationInfo.textContent = 'No se encontraron resultados';
+            } else {
+                paginationInfo.textContent = `Mostrando ${visibleCount} resultado(s) filtrado(s)`;
+            }
+        }
+    }
+    
+    // Función para limpiar todos los filtros
+    function limpiarFiltros() {
+        filterInputs.forEach(input => {
+            input.value = '';
+        });
+        
+        tableRows.forEach(row => {
+            row.style.display = '';
+        });
+        
+        actualizarContadorResultados();
+    }
+    
+    // Botón limpiar filtros
+    const btnClearFilters = document.getElementById('clear-filters');
+    if (btnClearFilters) {
+        btnClearFilters.addEventListener('click', limpiarFiltros);
+    }
+});
+</script>
+
+{% csrf_token %}
+{% endblock %}

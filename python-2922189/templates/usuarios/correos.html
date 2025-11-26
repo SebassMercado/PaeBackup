@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Enviar Correos - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="form-center-wrapper">
+    <div class="card-form">
+        <div class="formulario">
+            <h2><i class='bx bx-mail-send'></i> Envío de Correos Masivos</h2>
+            <p class="descripcion">Envía correos a usuarios activos del sistema</p>
+            
+            <form method="post" class="form-correos">
+                {% csrf_token %}
+                
+                <!-- Destinatarios -->
+                <div class="campo-destinatarios">
+                    <label class="label-principal">
+                        <i class='bx bx-user-check'></i>
+                        Seleccionar Destinatarios
+                    </label>
+                    
+                    <div class="controles-seleccion">
+                        <button type="button" id="seleccionarTodos" class="btn-control">
+                            <i class='bx bx-check-double'></i>
+                            Todos
+                        </button>
+                        <button type="button" id="deseleccionarTodos" class="btn-control">
+                            <i class='bx bx-x'></i>
+                            Ninguno
+                        </button>
+                        <button type="button" id="soloAdmins" class="btn-control">
+                            <i class='bx bx-crown'></i>
+                            Administradores
+                        </button>
+                        <span class="contador-seleccionados">0 seleccionados</span>
+                    </div>
+                    
+                    <div class="lista-usuarios">
+                        {% for usuario in usuarios %}
+                        <div class="usuario-item">
+                            <label class="usuario-checkbox">
+                                <input type="checkbox" 
+                                       name="destinatarios" 
+                                       value="{{ usuario.correo }}"
+                                       data-rol="{{ usuario.rol }}">
+                                <div class="checkbox-custom"></div>
+                                <div class="usuario-info">
+                                    <div class="usuario-nombre">
+                                        {{ usuario.nombre_completo }}
+                                    </div>
+                                    <div class="usuario-datos">
+                                        <span class="correo">{{ usuario.correo }}</span>
+                                        <span class="rol rol-{{ usuario.rol|lower }}">
+                                            {% if usuario.rol == 'A' %}
+                                                👤 Admin
+                                            {% elif usuario.rol == 'EP' %}
+                                                🏭 Producción
+                                            {% else %}
+                                                💼 Ventas
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Asunto -->
+                <div class="fila">
+                    <div class="campo full">
+                        <label for="asunto">
+                            <i class='bx bx-text'></i>
+                            Asunto del Correo
+                        </label>
+                        <input type="text" 
+                               id="asunto" 
+                               name="asunto" 
+                               required 
+                               placeholder="Ejemplo: Actualización importante del sistema PAE"
+                               class="input"
+                               value="{{ request.POST.asunto }}">
+                    </div>
+                </div>
+                
+                <!-- Mensaje -->
+                <div class="fila">
+                    <div class="campo full">
+                        <label for="mensaje">
+                            <i class='bx bx-message-square-detail'></i>
+                            Contenido del Mensaje
+                        </label>
+                        <textarea id="mensaje" 
+                                  name="mensaje" 
+                                  required 
+                                  placeholder="Escribe tu mensaje aquí...\n\nPuedes incluir:\n- Información importante\n- Instrucciones\n- Enlaces\n- Fechas relevantes"
+                                  class="textarea"
+                                  rows="8">{{ request.POST.mensaje }}</textarea>
+                        <div class="contador-caracteres">
+                            <span id="caracteres">0</span> / 2000 caracteres
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Vista Previa -->
+                <div class="vista-previa" style="display: none;">
+                    <h3><i class='bx bx-show'></i> Vista Previa</h3>
+                    <div class="email-preview">
+                        <div class="email-header">
+                            <strong>De:</strong> Sistema PAE &lt;sistema@pae.com&gt;<br>
+                            <strong>Para:</strong> <span id="preview-destinatarios"></span><br>
+                            <strong>Asunto:</strong> <span id="preview-asunto"></span>
+                        </div>
+                        <div class="email-body">
+                            <div id="preview-mensaje"></div>
+                            <hr>
+                            <small>Este correo fue enviado desde el Sistema PAE</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botones -->
+                <div class="botones">
+                    <button type="button" id="btnPreview" class="btn-preview">
+                        <i class='bx bx-show'></i>
+                        Vista Previa
+                    </button>
+                    <button type="submit" class="btn-primario enviar-btn">
+                        <i class='bx bx-send'></i>
+                        <span class="btn-text">Enviar Correos</span>
+                        <span class="loading" style="display: none;">
+                            <i class='bx bx-loader-alt bx-spin'></i>
+                            Enviando...
+                        </span>
+                    </button>
+                    <a href="{% url 'usuarios:index' %}" class="btn-secundario">
+                        <i class='bx bx-arrow-back'></i>
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos del DOM
+    const checkboxes = document.querySelectorAll('input[name="destinatarios"]');
+    const contadorSeleccionados = document.querySelector('.contador-seleccionados');
+    const btnSeleccionarTodos = document.getElementById('seleccionarTodos');
+    const btnDeseleccionarTodos = document.getElementById('deseleccionarTodos');
+    const btnSoloAdmins = document.getElementById('soloAdmins');
+    const asuntoInput = document.getElementById('asunto');
+    const mensajeTextarea = document.getElementById('mensaje');
+    const contadorCaracteres = document.getElementById('caracteres');
+    const btnPreview = document.getElementById('btnPreview');
+    const vistaPrevia = document.querySelector('.vista-previa');
+    const form = document.querySelector('.form-correos');
+    const enviarBtn = document.querySelector('.enviar-btn');
+    
+    // Contador de seleccionados
+    function actualizarContador() {
+        const seleccionados = document.querySelectorAll('input[name="destinatarios"]:checked').length;
+        contadorSeleccionados.textContent = `${seleccionados} seleccionados`;
+        return seleccionados;
+    }
+    
+    // Event listeners para checkboxes
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', actualizarContador);
+    });
+    
+    // Seleccionar todos
+    btnSeleccionarTodos.addEventListener('click', () => {
+        checkboxes.forEach(checkbox => checkbox.checked = true);
+        actualizarContador();
+    });
+    
+    // Deseleccionar todos
+    btnDeseleccionarTodos.addEventListener('click', () => {
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+        actualizarContador();
+    });
+    
+    // Solo administradores
+    btnSoloAdmins.addEventListener('click', () => {
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checkbox.getAttribute('data-rol') === 'A';
+        });
+        actualizarContador();
+    });
+    
+    // Contador de caracteres
+    mensajeTextarea.addEventListener('input', () => {
+        const longitud = mensajeTextarea.value.length;
+        contadorCaracteres.textContent = longitud;
+        
+        if (longitud > 2000) {
+            contadorCaracteres.style.color = '#dc3545';
+        } else if (longitud > 1500) {
+            contadorCaracteres.style.color = '#ffc107';
+        } else {
+            contadorCaracteres.style.color = '#28a745';
+        }
+    });
+    
+    // Vista previa
+    btnPreview.addEventListener('click', () => {
+        const seleccionados = actualizarContador();
+        
+        if (seleccionados === 0) {
+            alert('Debes seleccionar al menos un destinatario');
+            return;
+        }
+        
+        if (!asuntoInput.value.trim()) {
+            alert('Debes escribir un asunto');
+            asuntoInput.focus();
+            return;
+        }
+        
+        if (!mensajeTextarea.value.trim()) {
+            alert('Debes escribir un mensaje');
+            mensajeTextarea.focus();
+            return;
+        }
+        
+        // Mostrar vista previa
+        document.getElementById('preview-destinatarios').textContent = `${seleccionados} usuarios`;
+        document.getElementById('preview-asunto').textContent = asuntoInput.value;
+        document.getElementById('preview-mensaje').innerHTML = mensajeTextarea.value.replace(/\n/g, '<br>');
+        
+        vistaPrevia.style.display = 'block';
+        vistaPrevia.scrollIntoView({ behavior: 'smooth' });
+    });
+    
+    // Submit del formulario
+    form.addEventListener('submit', function(e) {
+        const seleccionados = actualizarContador();
+        
+        if (seleccionados === 0) {
+            e.preventDefault();
+            alert('Debes seleccionar al menos un destinatario');
+            return;
+        }
+        
+        // Mostrar loading
+        enviarBtn.querySelector('.btn-text').style.display = 'none';
+        enviarBtn.querySelector('.loading').style.display = 'inline-flex';
+        enviarBtn.disabled = true;
+    });
+    
+    // Inicializar contador
+    actualizarContador();
+});
+</script>
+{% endblock %}

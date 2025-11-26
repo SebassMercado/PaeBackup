@@ -1,0 +1,726 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Producciones - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+<style>
+/* Estilos específicos para producciones */
+.estado-badge.pendiente {
+    background: linear-gradient(135deg, #ff9500, #ff6b00);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.estado-badge.aceptada {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.estado-badge.finalizada {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.estado-badge.esperando-insumos {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.production-actions {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-estado {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    min-width: 40px;
+    justify-content: center;
+}
+
+.btn-estado:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-aceptar {
+    background: #007bff;
+    color: white;
+}
+
+.btn-finalizar {
+    background: #28a745;
+    color: white;
+}
+
+.btn-reintentar {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-fechas {
+    background: #fd7e14;
+    color: white;
+}
+
+.btn-recetas {
+    background: #17a2b8;
+    color: white;
+}
+
+/* Modal para fechas */
+.modal-fechas {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-fechas-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 600px;
+    position: relative;
+}
+
+.modal-fechas h3 {
+    color: #dc3545;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fechas-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.fecha-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.fecha-item strong {
+    min-width: 120px;
+}
+
+.close-modal {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close-modal:hover {
+    color: #000;
+}
+
+/* Dark mode para modal */
+body.dark .modal-fechas-content {
+    background-color: #1f1f1f;
+    color: #e0e0e0;
+}
+
+body.dark .fecha-item {
+    background: #2a2a2a;
+}
+
+body.dark .close-modal {
+    color: #ccc;
+}
+
+body.dark .close-modal:hover {
+    color: #fff;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="contenedor">
+        <div class="tabla">
+            <section class="card">
+                <!-- Header -->
+                <div class="encabezado">
+                    <h2><i class='bx bx-bar-chart-big'></i> Gestión de Producciones</h2>
+                    <div class="acciones-principales">
+                        <a href="{% url 'produccion:nueva' %}" class="export-btn" title="Crear nueva producción">
+                            <i class='bx bx-plus'></i>
+                            Nueva Producción
+                        </a>
+                        <a href="{% url 'produccion:exportar_pdf' %}" class="export-btn" title="Descargar reporte PDF de producciones">
+                            <i class='bx bx-file-export'></i>
+                            Reporte PDF
+                        </a>
+                        <a href="{% url 'produccion:migrar' %}" class="export-btn" title="Migrar producciones (stub)">
+                            <i class='bx bx-upload'></i>
+                            Migrar
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Estadísticas Mejoradas -->
+                <div class="estadisticas-modern">
+                    <div class="stats-container">
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern total">
+                                <i class='bx bx-cog'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ stats.total }}</h3>
+                                <p>Total Producciones</p>
+                                <div class="stat-trend">
+                                    <i class='bx bx-trending-up'></i>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern activos">
+                                <i class='bx bx-check-circle'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ stats.completadas }}</h3>
+                                <p>Finalizadas</p>
+                                <div class="stat-trend positive">
+                                    <i class='bx bx-check-circle'></i>
+                                    <span>Completas</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern inactivos">
+                                <i class='bx bx-time'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ stats.pendientes }}</h3>
+                                <p>Pendientes</p>
+                                <div class="stat-trend negative">
+                                    <i class='bx bx-time'></i>
+                                    <span>En Proceso</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern">
+                            <div class="stat-icon-modern esperando">
+                                <i class='bx bx-package'></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>{{ stats.esperando }}</h3>
+                                <p>Esperando Insumos</p>
+                                <div class="stat-trend warning">
+                                    <i class='bx bx-package'></i>
+                                    <span>Esperando</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Producciones con Filtros -->
+                <div class="table-header">
+                    <h3><i class='bx bx-table'></i> Lista de Producciones</h3>
+                    <button type="button" class="btn-clear-filters" id="clear-filters">
+                        <i class='bx bx-filter-alt'></i>
+                        Limpiar Filtros
+                    </button>
+                </div>
+
+                <div class="wrapper" id="tablaProduccionesWrapper">
+                    <table id="tablaProducciones">
+                        <thead>
+                            <tr>
+                                <th style="width:100px">
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            ID <span class="draggable" data-col="0"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="0">
+                                    </div>
+                                </th>
+                                <th style="width:160px">
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Código Venta <span class="draggable" data-col="1"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="1">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Fecha Registro <span class="draggable" data-col="2"></span>
+                                        </div>
+                                        <input type="date" class="filter-input" placeholder="Filtrar..." data-column="2">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Asignado por <span class="draggable" data-col="3"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="3">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Asignado a <span class="draggable" data-col="4"></span>
+                                        </div>
+                                        <input type="text" class="filter-input" placeholder="Filtrar..." data-column="4">
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="column-header">
+                                        <div class="column-title">
+                                            Estado <span class="draggable" data-col="5"></span>
+                                        </div>
+                                        <select class="filter-input" data-column="5">
+                                            <option value="">Todos</option>
+                                            <option value="Pendiente">Pendiente</option>
+                                            <option value="Aceptada">Aceptada</option>
+                                            <option value="Finalizada">Finalizada</option>
+                                            <option value="Esperando insumos">Esperando insumos</option>
+                                        </select>
+                                    </div>
+                                </th>
+                                <th style="width:120px">
+                                    <div class="column-title">
+                                        Opciones
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for produccion in producciones %}
+                            <tr data-produccion-id="{{ produccion.id_proc }}">
+                                <td><span class="cell-content" style="font-weight:600">{{ produccion.id_proc }}</span></td>
+                                <td><span class="cell-content">{{ produccion.venta_id|default:"—" }}</span></td>
+                                <td><span class="cell-content">{{ produccion.fecha_hora|date:"d/m/Y H:i:s" }}</span></td>
+                                <td><span class="cell-content">{{ produccion.usuario_registro|default:"Sistema" }}</span></td>
+                                <td><span class="cell-content">{{ produccion.asignado_a|default:"Sin asignar" }}</span></td>
+                                <td class="estado-cell">
+                                    <span class="cell-content estado-badge 
+                                        {% if produccion.estado == 'Pendiente' %}pendiente{% elif produccion.estado == 'Aceptada' %}aceptada{% elif produccion.estado == 'Finalizada' %}finalizada{% elif produccion.estado == 'Esperando insumos' %}esperando-insumos{% endif %}">
+                                        {{ produccion.estado }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="acciones">
+                                        <!-- Detalle de Producción -->
+                                        <a href="{% url 'produccion:recetas' produccion.id_proc %}" 
+                                           class="btn btn-outline-primary" 
+                                           title="Ver detalle de producción">
+                                            <i class="bx bx-detail"></i>
+                                        </a>
+                                        
+
+                                        <!-- Cambiar Estado -->
+                                        {% if produccion.estado == 'Pendiente' %}
+                                        <button class="btn btn-outline-success cambiar-estado" 
+                                                data-produccion-id="{{ produccion.id_proc }}"
+                                                data-accion="aceptar"
+                                                title="Aceptar producción">
+                                            <i class="bx bx-check"></i>
+                                        </button>
+                                        {% elif produccion.estado == 'Aceptada' %}
+                                        <button class="btn btn-outline-warning cambiar-estado" 
+                                                data-produccion-id="{{ produccion.id_proc }}"
+                                                data-accion="finalizar"
+                                                title="Finalizar producción">
+                                            <i class="bx bx-flag"></i>
+                                        </button>
+                                        {% elif produccion.estado == 'Esperando insumos' %}
+                                        <button class="btn btn-outline-secondary cambiar-estado" 
+                                                data-produccion-id="{{ produccion.id_proc }}"
+                                                data-accion="reintentar"
+                                                title="Reintentar">
+                                            <i class="bx bx-refresh"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <!-- Eliminar -->
+                                        <button class="btn btn-outline-danger eliminar-produccion" 
+                                                data-produccion-id="{{ produccion.id_proc }}"
+                                                title="Eliminar producción">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="no-data">
+                                    <div class="empty-state">
+                                        <i class='bx bx-package'></i>
+                                        <h3>No hay producciones registradas</h3>
+                                        <p>Comience creando su primera producción</p>
+                                        <a href="{% url 'produccion:nueva' %}" class="btn btn-primary">
+                                            <i class='bx bx-plus'></i>
+                                            Nueva Producción
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if producciones.has_other_pages %}
+                <div class="paginacion">
+                    <div class="pagination-info">
+                        Página {{ producciones.number }} de {{ producciones.paginator.num_pages }}
+                        ({{ producciones.paginator.count }} producciones en total)
+                    </div>
+                    <div class="pagination-controls">
+                        {% if producciones.has_previous %}
+                            <a href="?page=1" class="btn-pag">❮❮</a>
+                            <a href="?page={{ producciones.previous_page_number }}" class="btn-pag">❮</a>
+                        {% endif %}
+                        
+                        <span class="page-current">{{ producciones.number }}</span>
+                        
+                        {% if producciones.has_next %}
+                            <a href="?page={{ producciones.next_page_number }}" class="btn-pag">❯</a>
+                            <a href="?page={{ producciones.paginator.num_pages }}" class="btn-pag">❯❯</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Botón Volver -->
+                <div class="volver-section">
+                    <a href="{% url 'dashboard' %}" class="btn-back">
+                        <i class='bx bx-chevron-left'></i> 
+                        Volver
+                    </a>
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+
+<!-- Modal de Confirmación -->
+<div id="modalConfirmacion" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Confirmar Acción</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="mensajeConfirmacion"></p>
+            <!-- Observación final (si se deja vacío no se guarda) -->
+            <div id="finalizarExtras" style="display:none; margin-top:15px;">
+                <label for="txtObservacion" style="font-weight:600;">Observación (opcional)</label>
+                <textarea id="txtObservacion" rows="3" style="width:100%; resize:vertical; padding:8px; border-radius:6px; border:1px solid #ccc;"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="btnCancelar" class="btn btn-secondary">Cancelar</button>
+            <button id="btnConfirmar" class="btn btn-danger">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+// JavaScript para funcionalidades AJAX y modales
+document.addEventListener('DOMContentLoaded', function() {
+    // CSRF Token para AJAX
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Elementos del modal de confirmación
+    const modal = document.getElementById('modalConfirmacion');
+    const modalClose = document.querySelector('.modal-close');
+    const btnCancelar = document.getElementById('btnCancelar');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    const mensajeConfirmacion = document.getElementById('mensajeConfirmacion');
+    
+
+    
+    let accionPendiente = null;
+    
+    // Funciones del modal de confirmación
+    function abrirModal(mensaje) {
+        mensajeConfirmacion.textContent = mensaje;
+        const extras = document.getElementById('finalizarExtras');
+        if (accionPendiente && accionPendiente.accion === 'finalizar') {
+            extras.style.display = 'block';
+        } else if (extras) {
+            extras.style.display = 'none';
+        }
+        modal.style.display = 'flex';
+    }
+    
+    function cerrarModal() {
+        modal.style.display = 'none';
+        accionPendiente = null;
+        const extras = document.getElementById('finalizarExtras');
+        if (extras) {
+            extras.style.display = 'none';
+            const txt = document.getElementById('txtObservacion');
+            if (txt) txt.value = '';
+        }
+    }
+    
+    // Event listeners del modal de confirmación
+    modalClose.addEventListener('click', cerrarModal);
+    btnCancelar.addEventListener('click', cerrarModal);
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) cerrarModal();
+    });
+    
+
+    
+    // Cambiar estado de producción
+    document.querySelectorAll('.cambiar-estado').forEach(button => {
+        button.addEventListener('click', function() {
+            const produccionId = this.getAttribute('data-produccion-id');
+            const accion = this.getAttribute('data-accion');
+            const row = this.closest('tr');
+            
+            let mensaje = '';
+            if (accion === 'aceptar') {
+                mensaje = '¿Está seguro de aceptar esta producción?';
+            } else if (accion === 'finalizar') {
+                mensaje = '¿Está seguro de finalizar esta producción?';
+            } else if (accion === 'reintentar') {
+                mensaje = '¿Está seguro de reintentar esta producción?';
+            }
+            
+            accionPendiente = {
+                tipo: 'cambiar-estado',
+                produccionId: produccionId,
+                accion: accion,
+                url: `/produccion/api/cambiar-estado/${produccionId}/`,
+                row: row
+            };
+            
+            abrirModal(mensaje);
+        });
+    });
+    
+    // Eliminar producción
+    document.querySelectorAll('.eliminar-produccion').forEach(button => {
+        button.addEventListener('click', function() {
+            const produccionId = this.getAttribute('data-produccion-id');
+            const row = this.closest('tr');
+            
+            accionPendiente = {
+                tipo: 'eliminar',
+                produccionId: produccionId,
+                url: `/produccion/eliminar/${produccionId}/`,
+                row: row
+            };
+            
+            abrirModal('¿Está seguro de eliminar esta producción?');
+        });
+    });
+    
+    // Confirmar acción
+    btnConfirmar.addEventListener('click', function() {
+        if (!accionPendiente) return;
+        
+        let requestBody = {};
+        if (accionPendiente.tipo === 'cambiar-estado') {
+            requestBody = { accion: accionPendiente.accion };
+            if (accionPendiente.accion === 'finalizar') {
+                const txt = document.getElementById('txtObservacion');
+                requestBody.observacion = txt ? txt.value.trim() : '';
+            }
+        }
+        
+        // Ejecutar acción AJAX
+        fetch(accionPendiente.url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(requestBody)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (accionPendiente.tipo === 'eliminar') {
+                if (data.success) {
+                    console.log('[success] Producción eliminada');
+                    accionPendiente.row.remove();
+                } else {
+                    console.log('[error] ' + (data.message || 'No se pudo eliminar'));
+                }
+            } else if (accionPendiente.tipo === 'cambiar-estado') {
+                const badge = accionPendiente.row.querySelector('.estado-badge');
+                if (data.estado && badge) {
+                    badge.textContent = data.estado;
+                    badge.className = 'cell-content estado-badge ' + (
+                        data.estado === 'Pendiente' ? 'pendiente' :
+                        data.estado === 'Aceptada' ? 'aceptada' :
+                        data.estado === 'Finalizada' ? 'finalizada' :
+                        data.estado === 'Esperando insumos' ? 'esperando-insumos' : ''
+                    );
+                    // Actualizar botón de acción según nuevo estado para evitar doble "Aceptar"
+                    const accionesDiv = accionPendiente.row.querySelector('.acciones');
+                    if (accionesDiv) {
+                        // Mantener botón detalle y eliminar siempre existente
+                        const detalleBtn = accionesDiv.querySelector('a.btn.btn-outline-primary');
+                        const eliminarBtn = accionesDiv.querySelector('.eliminar-produccion');
+                        let nuevoBotonHTML = '';
+                        if (data.estado === 'Aceptada') {
+                            nuevoBotonHTML = `\n<button class="btn btn-outline-warning cambiar-estado" data-produccion-id="${accionPendiente.produccionId}" data-accion="finalizar" title="Finalizar producción"><i class="bx bx-flag"></i></button>`;
+                        } else if (data.estado === 'Pendiente') {
+                            nuevoBotonHTML = `\n<button class="btn btn-outline-success cambiar-estado" data-produccion-id="${accionPendiente.produccionId}" data-accion="aceptar" title="Aceptar producción"><i class="bx bx-check"></i></button>`;
+                        } else if (data.estado === 'Esperando insumos') {
+                            nuevoBotonHTML = `\n<button class="btn btn-outline-secondary cambiar-estado" data-produccion-id="${accionPendiente.produccionId}" data-accion="reintentar" title="Reintentar"><i class="bx bx-refresh"></i></button>`;
+                        } else {
+                            // Finalizada: no mostrar botón de cambio de estado
+                            nuevoBotonHTML = '';
+                        }
+                        // Reconstruir acciones conservando los botones existentes pertinentes
+                        accionesDiv.innerHTML = '';
+                        if (detalleBtn) accionesDiv.appendChild(detalleBtn.cloneNode(true));
+                        if (nuevoBotonHTML) accionesDiv.insertAdjacentHTML('beforeend', nuevoBotonHTML);
+                        if (eliminarBtn) accionesDiv.appendChild(eliminarBtn.cloneNode(true));
+                        // Re-asignar listeners a nuevos botones
+                        accionesDiv.querySelectorAll('.cambiar-estado').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                const produccionId = this.getAttribute('data-produccion-id');
+                                const accion = this.getAttribute('data-accion');
+                                const row = this.closest('tr');
+                                let mensaje = accion === 'aceptar' ? '¿Está seguro de aceptar esta producción?' :
+                                              accion === 'finalizar' ? '¿Está seguro de finalizar esta producción?' :
+                                              accion === 'reintentar' ? '¿Está seguro de reintentar esta producción?' : '';
+                                accionPendiente = {
+                                    tipo: 'cambiar-estado',
+                                    produccionId: produccionId,
+                                    accion: accion,
+                                    url: `/produccion/api/cambiar-estado/${produccionId}/`,
+                                    row: row
+                                };
+                                abrirModal(mensaje);
+                            });
+                        });
+                        accionesDiv.querySelectorAll('.eliminar-produccion').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                const produccionId = this.getAttribute('data-produccion-id');
+                                const row = this.closest('tr');
+                                accionPendiente = {
+                                    tipo: 'eliminar',
+                                    produccionId: produccionId,
+                                    url: `/produccion/eliminar/${produccionId}/`,
+                                    row: row
+                                };
+                                abrirModal('¿Está seguro de eliminar esta producción?');
+                            });
+                        });
+                    }
+                }
+                console.log(`[info] ${data.message || 'Estado actualizado'}`);
+            }
+        })
+        .catch(error => {
+            mostrarMensaje('Error de conexión', 'error');
+        })
+        .finally(() => {
+            cerrarModal();
+        });
+    });
+    
+    // Función para mostrar mensajes
+    function mostrarMensaje(mensaje, tipo) { console.log(`[${tipo}] ${mensaje}`); }
+    
+    // Sistema de filtros
+    const filterInputs = document.querySelectorAll('.filter-input');
+    const tableRows = document.querySelectorAll('#tablaProducciones tbody tr');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('input', aplicarFiltros);
+        input.addEventListener('change', aplicarFiltros);
+    });
+    
+    function aplicarFiltros() {
+        tableRows.forEach(row => {
+            if (row.querySelector('.empty-state')) return;
+            
+            let mostrar = true;
+            
+            filterInputs.forEach(input => {
+                const columnIndex = parseInt(input.getAttribute('data-column'));
+                const filterValue = input.value.toLowerCase().trim();
+                
+                if (filterValue) {
+                    const cellValue = row.children[columnIndex].textContent.toLowerCase().trim();
+                    if (!cellValue.includes(filterValue)) {
+                        mostrar = false;
+                    }
+                }
+            });
+            
+            row.style.display = mostrar ? '' : 'none';
+        });
+    }
+    
+    // Limpiar filtros
+    document.getElementById('clear-filters').addEventListener('click', function() {
+        filterInputs.forEach(input => {
+            input.value = '';
+        });
+        tableRows.forEach(row => {
+            row.style.display = '';
+        });
+    });
+});
+</script>
+
+{% csrf_token %}
+{% endblock %}

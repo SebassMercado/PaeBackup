@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nuevo Insumo - PAE{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/usuarios.css' %}?v=3">
+{% endblock %}
+
+{% block content %}
+<section class="home">
+    <div class="card-form">
+        <div class="formulario">
+            <h2><i class='bx bx-package'></i> Nuevo Insumo</h2>
+            
+            <form method="post" class="form-usuario">
+                {% csrf_token %}
+                
+                <!-- Nombre del Insumo -->
+                <div class="fila">
+                    <div class="campo full">
+                        <label for="nombre">
+                            <i class='bx bx-package'></i>
+                            Nombre del Insumo
+                        </label>
+                        <input type="text" 
+                               id="nombre" 
+                               name="nombre" 
+                               required 
+                               placeholder="Nombre del insumo"
+                               class="input"
+                               value="{{ request.POST.nombre }}">
+                        <span class="help-text">Ingrese el nombre descriptivo del insumo</span>
+                    </div>
+                </div>
+
+                <!-- Unidad de Medida y Stock Mínimo -->
+                <div class="fila dos-columnas">
+                    <div class="campo">
+                        <label for="unidad_medida">
+                            <i class='bx bx-ruler'></i>
+                            Unidad de Medida
+                        </label>
+                        <select id="unidad_medida" name="unidad_medida" required class="select">
+                            <option value="">Seleccione una unidad</option>
+                            {% for codigo, nombre in unidades_medida %}
+                            <option value="{{ codigo }}" 
+                                    {% if request.POST.unidad_medida == codigo %}selected{% endif %}>
+                                {{ nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="stock_min">
+                            <i class='bx bx-error-circle'></i>
+                            Stock Mínimo
+                        </label>
+                        <input type="number" 
+                               id="stock_min" 
+                               name="stock_min" 
+                               required 
+                               placeholder="0.00"
+                               class="input"
+                               step="0.01"
+                               min="0"
+                               value="{{ request.POST.stock_min|default:'0' }}">
+                        <span class="help-text">Cantidad mínima para alerta</span>
+                    </div>
+                </div>
+
+                <!-- Categoría -->
+                <div class="fila">
+                    <div class="campo full">
+                        <label for="categoria">
+                            <i class='bx bx-category'></i>
+                            Categoría
+                        </label>
+                        <select id="categoria" name="categoria" required class="select">
+                            <optgroup label="Requieren lote y vencimiento">
+                                {% for codigo, nombre in categorias %}
+                                    {% if codigo in 'Enlatados Envasados Lácteos Carnes Bebidas Congelados Panadería industrial Salsas' %}
+                                    <option value="{{ codigo }}" {% if request.POST.categoria == codigo %}selected{% endif %}>{{ nombre }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Sin vencimiento obligatorio">
+                                {% for codigo, nombre in categorias %}
+                                    {% if codigo in 'Frutas Verduras Granel Panadería artesanal' %}
+                                    <option value="{{ codigo }}" {% if request.POST.categoria == codigo %}selected{% endif %}>{{ nombre }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Stock Inicial removido: se inicia en 0 y se incrementa con lotes/ingresos -->
+
+
+
+                <!-- Botones de acción -->
+                <div class="form-actions">
+                    <a href="{% url 'insumos:index' %}" class="btn btn-secondary">
+                        <i class='bx bx-x'></i>
+                        Cancelar
+                    </a>
+                    
+                    <button type="button" onclick="resetForm()" class="btn btn-warning">
+                        <i class='bx bx-refresh'></i>
+                        Limpiar Formulario
+                    </button>
+                    
+                    <button type="button" onclick="previewInsumo()" class="btn btn-info" id="preview-btn">
+                        <i class='bx bx-show'></i>
+                        Vista Previa
+                    </button>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class='bx bx-save'></i>
+                        Crear Insumo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<style>
+
+
+/* Botones de acción como en recetas */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background: #138496;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+/* (Leyenda y mensaje removidos por solicitud) */
+/* Centrado vertical y horizontal del formulario */
+.home {
+        min-height: calc(100vh - 70px); /* ajusta si tu header tiene otro alto */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+}
+.card-form { width:100%; max-width:760px; }
+.formulario { box-shadow:0 6px 18px rgba(0,0,0,0.15); border-radius:14px; }
+@media (max-width: 768px) {
+    .home { padding: 20px 12px; }
+}
+</style>
+
+<script>
+// Validaciones en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.form-usuario');
+    const nombre = document.getElementById('nombre');
+    const stockMin = document.getElementById('stock_min');
+    // Stock inicial eliminado, se asumirá 0
+    const categoriaSelect = document.getElementById('categoria');
+    // Mensaje dinámico eliminado
+    
+    // Validar nombre
+    nombre.addEventListener('input', function() {
+        const valor = this.value.trim();
+        if (valor.length < 2) {
+            this.setCustomValidity('El nombre debe tener al menos 2 caracteres');
+        } else if (valor.length > 100) {
+            this.setCustomValidity('El nombre no puede exceder 100 caracteres');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    // Validar stock mínimo
+    stockMin.addEventListener('input', function() {
+        const valor = parseFloat(this.value);
+        if (isNaN(valor) || valor < 0) {
+            this.setCustomValidity('El stock mínimo debe ser un número positivo');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    // Validar stock actual
+    stockActual.addEventListener('input', function() {
+        const valor = parseFloat(this.value);
+        if (isNaN(valor) || valor < 0) {
+            this.setCustomValidity('El stock actual debe ser un número positivo');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+    
+    // Formatear números decimales
+    function formatearDecimal(input) {
+        input.addEventListener('blur', function() {
+            const valor = parseFloat(this.value);
+            if (!isNaN(valor)) {
+                this.value = valor.toFixed(2);
+            }
+        });
+    }
+    
+    formatearDecimal(stockMin);
+    // Ya no se formatea stock inicial
+    
+    // Función para limpiar formulario
+    window.resetForm = function() {
+        if (confirm('¿Está seguro de que desea limpiar todos los campos?')) {
+            form.reset();
+            // Restablecer validaciones personalizadas
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => input.setCustomValidity(''));
+        }
+    };
+    
+    // Función para vista previa
+    window.previewInsumo = function() {
+        const nombre = document.getElementById('nombre').value;
+        const unidadMedida = document.getElementById('unidad_medida');
+        const stockMin = document.getElementById('stock_min').value;
+        const stockActual = 0; // Eliminado del formulario
+           const categoria = categoriaSelect.value;
+        
+        if (!nombre.trim()) {
+            alert('Por favor ingrese el nombre del insumo para ver la vista previa');
+            return;
+        }
+        
+        const unidadTexto = unidadMedida.options[unidadMedida.selectedIndex].text;
+        const stockMinNum = parseFloat(stockMin) || 0;
+        const stockActualNum = 0;
+        
+        // Calcular estado
+        let estado = 'Agotado';
+        let estadoClass = 'agotado';
+        if (stockActualNum > 0) {
+            if (stockActualNum >= stockMinNum) {
+                estado = 'Suficiente';
+                estadoClass = 'suficiente';
+            } else {
+                estado = 'Bajo';
+                estadoClass = 'bajo';
+            }
+        }
+        
+        const preview = `
+            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 10px 0;">
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">
+                    <i class='bx bx-package'></i> Vista Previa del Insumo
+                </h3>
+                <div style="display: grid; gap: 10px;">
+                    <p><strong>Nombre:</strong> ${nombre}</p>
+                    <p><strong>Unidad de Medida:</strong> ${unidadTexto}</p>
+                    <p><strong>Stock Mínimo:</strong> ${stockMinNum.toFixed(2)}</p>
+                    <p><strong>Stock Inicial:</strong> (0 por defecto)</p>
+                        <p><strong>Categoría:</strong> ${categoria}</p>
+                    <p><strong>Estado:</strong> <span class="badge-mini ${estadoClass}">${estado}</span></p>
+                </div>
+            </div>
+        `;
+        
+        // Mostrar en un modal o alert
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = preview;
+        tempDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; max-width: 500px; width: 90%;';
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '<i class="bx bx-x"></i> Cerrar';
+        closeBtn.style.cssText = 'background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px; width: 100%;';
+        closeBtn.onclick = () => document.body.removeChild(tempDiv);
+        
+        tempDiv.appendChild(closeBtn);
+        document.body.appendChild(tempDiv);
+    };
+});
+</script>
+{% endblock %}
